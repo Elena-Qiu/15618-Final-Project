@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Four colors</title>
+  <script src="lib/p5.min.js"></script>
+</head>
+<body>
+    <h1>Draw on me!</h1>
+    <div id="canvasContainer" style="padding: 50px;"></div>
+    <button onClick="button_reset()">Reset</button>
+    <button onClick="button_solve()">Solve</button>
+    <button onClick="button_generate_image()">Generate Image</button><br>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img01.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img02.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img03.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img04.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img05.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img06.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img07.png"></img><br>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img08.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img09.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img10.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img11.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img12.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img13.png"></img>
+    <img onClick="button_load_image(this.src)" height="50" src="examples/img14.png"></img>
+    <br>
+    <div id="data"></div>
+    <div id="log"></div>
+</body>
+
+<script src="generate_test_cases.js"></script>
+</html>
