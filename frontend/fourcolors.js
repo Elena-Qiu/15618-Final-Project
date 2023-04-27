@@ -64,6 +64,7 @@ function setup() {
     b = color('#048AD0');
     g = color('#338823');
     y = color('#FAEA04');
+    pixelDensity(1);
 
     update_status("Starting up.");
     noSmooth();
@@ -278,8 +279,9 @@ async function solve_graph() {
 function convertPixelsToString() {
     // let string = new TextDecoder().decode(pixels);
     // let string = String.fromCharCode.apply(null, pixels);
+    console.log("pixels length: " + pixels.length);
     let string = '' + w + '\n' + h + '\n' + pixels.join(",");
-    return string;
+    return string + ",";
 }
 
 function convertStringToPixels(solutionStr) {
