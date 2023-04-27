@@ -4,7 +4,7 @@ CFLAGS = -g -Og -Wall -std=c99 -MMD -D_FORTIFY_SOURCE=2 -D_XOPEN_SOURCE=700 -I.
 LDLIBS = -lm -lpcre
 LDLIBS += -Wl,-rpath
 
-DEPEND = csapp.h map_solver.h http_parser.h
+DEPEND = csapp.h map_solver.h
 PROGRAM = server.c csapp.c map_solver.c
 
 # Uncomment this to enable debug macros

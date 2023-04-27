@@ -39,18 +39,19 @@ let node_mapping = [];  // node_mapping[i] is the color for node i
 let color_map = [];
 let lines = [];
 
+const STATES = {
+    DRAWING: 0,
+    START_SOLVING: 1,
+    SOLVING: 2,
+    FINISHED: 3
+};
+
 let start, end;
 let dragging = false;   // boolean, whether or not the mouse is dragging
 let state = STATES.DRAWING;  // stop updating the patterns
 let solve_start;        // time the solving process starts
 let solve_stage = -1;       // the stage of solving process
 let canvas;
-
-const STATES = {
-    DRAWING: 0,
-    SOLVING: 1,
-    FINISHED: 2
-};
 
 /* Setting up canvas. */
 function setup() {
@@ -91,9 +92,9 @@ function draw() {
     case STATES.DRAWING:
         display_lines();
         break;
-    case STATES.SOLVING:
+    case STATES.START_SOLVING:
+        state = STATES.SOLVING;
         solve();
-        state = STATES.FINISHED;
         break;
     default:
         break;
@@ -246,15 +247,16 @@ function print_nodes_map() {
 
 /* Main solving method.
 The solving takes place in stages and logs its progress. */
-function solve() {
+async function solve() {
     update_status("solving at backend");
     loadPixels();
-    solve_graph();
+    await solve_graph();
     updatePixels();
     update_status("solved");
+    state = STATES.FINISHED;
 }
 
-function solve_graph() {
+async function solve_graph() {
     async function solveAtServer(input) {
         const response = await fetch(
             IP + ":" + PORT + "/" + VALID_URI, 
@@ -265,11 +267,11 @@ function solve_graph() {
             }
         );
         const responseText = await response.text();
-        return responseText
+        return responseText;
     }
 
     let input = convertPixelsToString(pixels);
-    let solutionStr = solveAtServer(input);
+    let solutionStr = await solveAtServer(input);
     convertStringToPixels(solutionStr);
 }
 
@@ -401,7 +403,7 @@ function fill_area(x, y, id) {
 function button_solve() {
     solve_start = millis();
     solve_stage = 0;
-    state = STATES.SOLVING;
+    state = STATES.START_SOLVING;
     frameRate(5);
 }
 
@@ -432,11 +434,12 @@ function button_generate_image() {
 
 function button_load_image(s) {
     button_reset();
-    let context = document.getElementById("canvas").getContext('2d');
+    let canvas = document.getElementById("canvas");
+    let context = canvas.getContext('2d');
     let img = new Image();
     state = STATES.SOLVING;
     img.onload = function() {
-        context.drawImage(this, 0, 0, canvas.width, canvas.height);
+        context.drawImage(this, 0, 0, w, h);
     }
     img.src = s;
 }
