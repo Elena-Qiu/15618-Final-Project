@@ -134,7 +134,7 @@ static void serve(client_info *client) {
         return;
     }
 
-    dbg_printf("body extracted: %s\n", body);
+    // dbg_printf("body extracted: %s\n", body);
 
     // solve the map coloring problem
     char *solution = NULL;
@@ -245,7 +245,7 @@ static bool parse_headers(rio_t *riop, size_t *content_lenp) {
         char *collon_pos = (char *) strchr(line_buf, ':');
         if (collon_pos == NULL ||
             collon_pos == line_buf ||
-            collon_pos - line_buf == strlen(line_buf))
+            (size_t) (collon_pos - line_buf) == strlen(line_buf))
         {
             sio_eprintf("invalid header: %s\n", line_buf);
             return false;
@@ -277,7 +277,7 @@ static bool extract_body(rio_t *riop, char **buf, size_t content_len) {
     *buf = (char *) Malloc(content_len + 1);
     ssize_t read_length = rio_readnb(riop, *buf, content_len);
     *(*buf + content_len) = 0;
-    if (read_length != content_len) {
+    if ((size_t) read_length != content_len) {
         sio_eprintf("reading %ld bytes (should be %ld bytes)\n", read_length,
                     content_len);
         Free(*buf);
@@ -317,7 +317,7 @@ static bool construct_response(char *solution, size_t solution_len , char **resp
         *response = (char *) Realloc(*response, new_length + 1);
     }
     strcat(*response, solution);
-    dbg_printf("Response:\n%s", *response);
+    // dbg_printf("Response:\n%s", *response);
 
     *response_lenp = new_length;
     return true;
