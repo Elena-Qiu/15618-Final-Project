@@ -292,14 +292,20 @@ function solve_graph() {
         return responseText
     }
 
-    let input = nodes_num.toString() + "\n";
-    for (let i = 0; i < edges.length; ++i)
-        input += edges[i][0] + " " + edges[i][1] + "\n";
-    
-    let solution = solveAtServer(input);
+    let input = convertPixelsToString(pixels);
+    let solutionStr = solveAtServer(input);
+    convertStringToPixels(solutionStr);
+}
 
-    // decode the output
+function convertPixelsToString() {
+    // let string = new TextDecoder().decode(pixels);
+    // let string = String.fromCharCode.apply(null, pixels);
+    let string = '' + w + '\n' + h + '\n' + pixels.join(",");
+    return string;
+}
 
+function convertStringToPixels(solutionStr) {
+    pixels = Uint8Array.from(solutionStr.split(",").map(c => parseInt(c)));
 }
 
 function check_time() {
