@@ -432,7 +432,8 @@ function button_generate_image() {
 
 function button_load_image(s) {
     button_reset();
-    let context = document.getElementById("canvas").getContext('2d');
+    let canvas = document.getElementById("canvas");
+    let context = canvas.getContext('2d');
     let img = new Image();
     state = STATES.SOLVING;
     img.onload = function() {

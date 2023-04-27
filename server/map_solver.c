@@ -7,7 +7,7 @@
  * @param solution_lenp[out] a pointer to the length of the solution string (whose value needs to be updated in this function)
  */
 bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
-    char *itr = input, *mark = input, *input = NULL;
+    char *itr = input, *mark = input, *pixels = NULL;
     while (*itr != '\n')    itr ++;
     *itr = 0;
     int w = atoi(mark);
@@ -17,10 +17,10 @@ bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
     *itr = 0;
     int h = atoi(mark);
     itr ++;
-    input = itr;
+    pixels = itr;
 
     *solution_lenp = w * h * 4;
-    return solveMapHelper(w, h, input, solutionp);
+    return solveMapHelper(w, h, pixels, solutionp);
 }
 
 
