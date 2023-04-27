@@ -9,6 +9,6 @@
 
 #include "csapp.h"
 
-bool solveMap(char *input, char **output, size_t *solution_lenp);
+bool solveMap(int w, int h, char *input, char **output);
 
 #endif

@@ -41,11 +41,16 @@ let lines = [];
 
 let start, end;
 let dragging = false;   // boolean, whether or not the mouse is dragging
-let stop_updating = false;  // stop updating the patterns
-let image_loaded = false;   // whether or not the image is loaded
+let state = STATES.DRAWING;  // stop updating the patterns
 let solve_start;        // time the solving process starts
 let solve_stage = -1;       // the stage of solving process
 let canvas;
+
+const STATES = {
+    DRAWING: 0,
+    SOLVING: 1,
+    FINISHED: 2
+};
 
 /* Setting up canvas. */
 function setup() {
@@ -82,14 +87,17 @@ function setup() {
 
 /* Main loop */
 function draw() {
-    solve();
-    
-    if (stop_updating) {
-        update_pixels();
-        frameRate(5);
-    }
-    else
+    switch (state) {
+    case STATES.DRAWING:
         display_lines();
+        break;
+    case STATES.SOLVING:
+        solve();
+        state = STATES.FINISHED;
+        break;
+    default:
+        break;
+    }
 }
 
 function display_lines() {
@@ -239,43 +247,11 @@ function print_nodes_map() {
 /* Main solving method.
 The solving takes place in stages and logs its progress. */
 function solve() {
-    if (solve_stage < 0)
-        return;
-    else if (solve_stage === 0) {
-        update_status("Loading pixels...");
-        loadPixels();
-
-        image_loaded = false;
-        solve_stage++;
-    }
-    else if (solve_stage === 1 && check_time()) { solve_stage++; }
-    else if (solve_stage === 2) {
-        update_status("Analyzing areas & finding nodes...");
-        find_nodes();
-        
-        update_pixels();
-        update_status("Found a total of " + nodes_num + " areas/nodes.");
-        edges = new Array(nodes_num);
-        for (let i = 0; i < edges.length; ++i)
-            edges[i] = [];
-        solve_stage++;
-    }
-    else if (solve_stage === 3 && check_time()) { solve_stage++; }
-    else if (solve_stage === 4) {
-        update_status("Analyzing marginal points & finding edges...");
-        find_edges();
-        update_pixels();
-        update_status("Found a total of " + edges_num + " edges.");
-        solve_stage++;
-    }
-    else if (solve_stage === 5 && check_time()) { solve_stage++; }
-    else if (solve_stage === 6) {
-        update_status("Building & solving graph, stand by...");
-        solve_graph();
-        update_status("Finished.");
-        update_pixels();
-        solve_stage++;
-    }
+    update_status("solving at backend");
+    loadPixels();
+    solve_graph();
+    updatePixels();
+    update_status("solved");
 }
 
 function solve_graph() {
@@ -306,50 +282,6 @@ function convertPixelsToString() {
 
 function convertStringToPixels(solutionStr) {
     pixels = Uint8Array.from(solutionStr.split(",").map(c => parseInt(c)));
-}
-
-function check_time() {
-    return (solve_start + solve_stage * 500) < millis();
-}
-
-function update_pixels() {
-    if (image_loaded == false)
-        updatePixels();
-
-    // update the color of pixels according to the mapping
-    if (node_mapping.length > 0) {
-        for (let y = 0; y < h; ++y) {
-            for (let x = 0; x < w; ++x) {
-                let idx = get_nodes_map(x, y);
-                let c = node_mapping[idx];
-                set_pixel_color(x, y, c);
-            }
-        }
-        node_mapping = [];
-    }
-    else {
-        // color marginal points to pink
-        stroke(pink);
-        strokeWeight(2);
-        for (let i = 0; i < marginal_points.length; i++) {
-            mp = marginal_points[i];
-            for (let j = 0; j < mp.length; j++) {
-                let p = mp[j];
-                point(p.x, p.y);
-            }
-        }
-
-        // indicate visible edges using green color
-        stroke(greencolor);
-        strokeWeight(4);
-        for (let i = 0; i < visible_edges.length; i++) {
-            let pts = visible_edges[i];
-            line(pts[0].x, pts[0].y, pts[1].x, pts[1].y);
-        }
-    }
-
-    stroke(black);
-    strokeWeight(1);
 }
 
 function update_status(s) {
@@ -469,15 +401,15 @@ function fill_area(x, y, id) {
 function button_solve() {
     solve_start = millis();
     solve_stage = 0;
-    stop_updating = true;
+    state = STATES.SOLVING;
+    frameRate(5);
 }
 
 function button_reset() {
     frameRate(30);
     lines = new Array();
-    stop_updating = false;
+    state = STATES.DRAWING;
     solve_stage = -1;
-    image_loaded = false;
     document.getElementById("log").innerHTML = '';
     nodes = [];
     edges = [];
@@ -502,8 +434,7 @@ function button_load_image(s) {
     button_reset();
     let context = document.getElementById("canvas").getContext('2d');
     let img = new Image();
-    stop_updating = true;
-    image_loaded = true;
+    state = STATES.SOLVING;
     img.onload = function() {
         context.drawImage(this, 0, 0, canvas.width, canvas.height);
     }
