@@ -42,6 +42,10 @@
 #include <stddef.h>    /* size_t */
 #include <sys/types.h> /* ssize_t */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Default file permissions are DEF_MODE & ~DEF_UMASK */
 #define DEF_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define DEF_UMASK S_IWGRP | S_IWOTH
@@ -100,5 +104,9 @@ ssize_t rio_readlineb(rio_t *rp, void *usrbuf, size_t maxlen);
 /* Reentrant protocol-independent client/server helpers */
 int open_clientfd(const char *hostname, const char *port);
 int open_listenfd(const char *port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CSAPP_H */
