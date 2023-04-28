@@ -12,8 +12,8 @@ else
 CFLAGS += -O2 -fopenmp
 endif
 
-SOURCES := src/*.cpp
-HEADERS := src/*.h
+SOURCES := *.cpp
+HEADERS := *.h
 
 TARGETBIN := fourcolor-$(CONFIGURATION)
 
@@ -26,7 +26,7 @@ $(TARGETBIN): $(SOURCES) $(HEADERS)
 	$(CXX) -o $@ $(CFLAGS) $(SOURCES) 
 
 format:
-	clang-format -i src/*.cpp src/*.h
+	clang-format -i *.cpp *.h
 
 clean:
 	rm -rf ./fourcolor-$(CONFIGURATION)
@@ -34,5 +34,5 @@ clean:
 # check:	default
 # 	./checker.pl
 
-FILES = src/*.cpp \
-		src/*.h
+FILES = *.cpp \
+		*.h

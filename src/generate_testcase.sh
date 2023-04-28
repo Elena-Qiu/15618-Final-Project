@@ -8,7 +8,7 @@ solveTimeOut=15
 shortest=4
 longest=15
 target=5
-dir="src/testcases/"
+dir="testcases/"
 for idx in ${!node[@]}
 do
   n=${node[$idx]}
