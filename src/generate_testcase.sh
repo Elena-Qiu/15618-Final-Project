@@ -2,12 +2,12 @@
 node=(40)
 edge=(100)
 scale=(100)
-edgeTimeOut=3
-solveTimeOut=15
+edgeTimeOut=3000
+solveTimeOut=1500
 #trial=10
-shortest=4
-longest=15
-target=5
+shortest=10
+longest=1000
+target=2
 dir="testcases/"
 for idx in ${!node[@]}
 do
@@ -25,7 +25,7 @@ do
     if [ $retVal -eq 0 ]; then
       if [ $timeCost -ge $shortest ] && [ $timeCost -le $longest ]
       then
-        newFile="${dir}/good_${n}_${e}_${timeCost}s.txt"
+        newFile="${dir}/good_${n}_${e}_${timeCost}ms.txt"
         inputFile="${inputFileName}.txt"
         cp $inputFile $newFile
         ((current=current+1))
