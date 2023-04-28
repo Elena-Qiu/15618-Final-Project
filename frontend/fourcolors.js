@@ -349,12 +349,13 @@ function find_edges() {
                                 edges[tempid].push(i);
                                 edges_num ++;
                             }
+                        } else {
+                            // add the edge to temp edges array
+                            temp_edges[i][0].push(tempid);
+                            temp_edges[i][1].push(1);
+                            temp_edges[tempid][0].push(i);
+                            temp_edges[tempid][1].push(1);
                         }
-                        // add the edge to temp edges array
-                        temp_edges[i][0].push(tempid);
-                        temp_edges[i][1].push(1);
-                        temp_edges[tempid][0].push(i);
-                        temp_edges[tempid][1].push(1);
                     }
                 }
             }
