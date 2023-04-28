@@ -4,6 +4,7 @@
 #include <numeric>
 #include <algorithm>
 #include "fourColor.h"
+#include <omp.h>
 
 int fourColorSolver::loadFromFile(std::string &fileName) {
     std::ifstream inFile;
@@ -116,7 +117,7 @@ bool fourColorSolver::heuristic() {
     return success;
 }
 
-int fourColorSolver::bruteForceHelper(int n, time_point start, std::vector<int> &curColors) {
+int fourColorSolver::bruteForceHelper(int n, time_point start, const std::vector<int> &curColors) {
     // check timeout
     auto now = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - start).count();
@@ -132,35 +133,43 @@ int fourColorSolver::bruteForceHelper(int n, time_point start, std::vector<int> 
 
     // recursion
     int rst = FAILURE;
-    for (int c = 0; c < 4; c++) {
-        auto privateColors = curColors;
-        #pragma omp taskgroup
-        {
+        for (int c = 0; c < 4; c++) {
+            auto privateColors = curColors;
             #pragma omp task firstprivate(privateColors) shared(adjacentLists, rst) untied
             {
-                bool canColor = true;
-                for (auto &v: adjacentLists[n]) {
-                    if (privateColors[v] == c) {
-                        canColor = false;
-                        break;
-                    }
-                }
                 #pragma omp cancellation point taskgroup
-                if (canColor) {
-                    privateColors[n] = c;
-                    int nextRst = bruteForceHelper(n + 1, start, privateColors);
-                    #pragma omp critical
-                    {
-                        rst = nextRst;
+                if (rst != SUCCESS) {
+                    bool canColor = true;
+                    for (auto &v: adjacentLists[n]) {
+                        // printf("[thread %d] checking node %d (color %d) with its neighbor %d (color %d)\n", omp_get_thread_num(), n, c, v, privateColors[v]);
+                        if (privateColors[v] == c) {
+                            canColor = false;
+                            // printf("[thread %d] node %d cannot be colored with %d, so skip to next node\n", omp_get_thread_num(), n, c);
+                            break;
+                        }
                     }
-                    if (nextRst == SUCCESS) {
-                        #pragma omp cancel taskgroup
+                // }
+                // #pragma omp cancellation point taskgroup
+                // if (rst != SUCCESS) {
+                    if (canColor) {
+                        privateColors[n] = c;
+                        // printf("[thread %d] node %d is colored with %d\n", omp_get_thread_num(), n, c);
+                        int nextRst = bruteForceHelper(n + 1, start, privateColors);
+                        if (nextRst == SUCCESS) {
+                            #pragma omp critical
+                            {
+                                rst = SUCCESS;
+                            }
+                            // printf("[thread %d] found solution!\n", omp_get_thread_num());
+                            #pragma omp cancel taskgroup
+                        } else {
+                            // printf("[thread %d] further trying indicates node %d cannot be colored with %d, return back\n", omp_get_thread_num(), n, c);
+                            privateColors[n] = -1;
+                        }
                     }
-                    privateColors[n] = -1;
                 }
             }
         }
-    }
     #pragma omp taskwait
     return rst;
 
@@ -188,15 +197,23 @@ int fourColorSolver::bruteForceHelper(int n, time_point start, std::vector<int> 
 }
 
 int fourColorSolver::bruteForce() {
+    if (putenv((char *) "OMP_CANCELLATION=true"))    {printf("set environment variable failed\n"); exit(-1);}
+    // printf("cancellation is %d\n", omp_get_cancellation());
     // reinitialize colors to -1
     std::fill(colors.begin(), colors.end(), -1);
     auto start = std::chrono::high_resolution_clock::now();
     int rst;
     #pragma omp parallel shared(start)
     {
+        auto colors_copy = colors;
         #pragma omp single
         {
-            rst = bruteForceHelper(0, start, colors);
+            #pragma omp taskgroup
+            {
+                rst = SUCCESS;
+                rst = bruteForceHelper(0, start, colors_copy);
+            }
+            std::cout << "[thread " << omp_get_thread_num() << "] result is " << return_status_array[rst] << std::endl;
         }
     }
     return rst;

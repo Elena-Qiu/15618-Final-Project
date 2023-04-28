@@ -7,7 +7,7 @@
 
 using namespace std;
 
-//int main(int argc, char *argv[]) {
+// int main(int argc, char *argv[]) {
 //    // ./FourColor [n] [e] [scale] [edgeTimeOut] [solveTimeout] [inputFileName]
 //    if (argc != 7) {
 //        cout << "ERROR: argument number should be 6\n";
@@ -20,43 +20,44 @@ using namespace std;
 //    string inputFileName(argv[6]);
 //    string outputFileName = inputFileName + "_output.txt";
 //    inputFileName += ".txt";
-//
+
 //    // generate test case
 //    testGenerator gen(n, e, scale, edgeTimeOut, inputFileName);
 //    if (!gen.generate()) {
 //        return -1;
 //    }
-//
+
 //    // solve graph
 //    fourColorSolver solver(solveTimeOut);
-//    cout << "Load File: " << solver.loadFromFile(inputFileName) << "\n";
-//
+//    cout << "Load File: " << return_status_array[solver.loadFromFile(inputFileName)] << "\n";
+
 //    auto start = std::chrono::high_resolution_clock::now();
-//    auto result = solver.solveGraph();
+//    auto result = return_status_array[solver.solveGraph()];
 //    auto end = std::chrono::high_resolution_clock::now();
-//    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
-//
+//    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
 //    cout << "Solve Graph: " << result << "\n";
-//    cout << "Time Cost: " << duration << " s\n";
-//
+//    cout << "Time Cost: " << duration << " ms\n";
+
 //    solver.saveToFile(outputFileName);
-//    if (result == "Heuristic Success" || result == "BruteForce Success") {
+//    if (result == "Success") {
 //        return 0;
 //    } else {
 //        return -2;
 //    }
-//}
+// }
 
 int main(int argc, char *argv[]) {
     // ./FourColor testcase
     if (argc != 2) {
         cout << "ERROR: argument number should be 2: ./fourcolor-release testcaseFilePath\n";
+        exit(-1);
     }
     string inputFilePath(argv[1]);
     string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 4) + "_output.txt";
 
     // solve graph
-    int solveTimeOut = 5;
+    int solveTimeOut = 60;
     fourColorSolver solver(solveTimeOut);
     auto fileLoadResult = return_status_array[solver.loadFromFile(inputFilePath)];
     cout << "Load File: " << fileLoadResult << "\n";
@@ -67,10 +68,10 @@ int main(int argc, char *argv[]) {
     auto start = std::chrono::high_resolution_clock::now();
     auto result = return_status_array[solver.solveGraph()];
     auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     cout << "Solve Graph: " << result << "\n";
-    cout << "Time Cost: " << duration << " s\n";
+    cout << "Time Cost: " << duration << " ms\n";
 
     solver.saveToFile(outputFilePath);
     return 0;

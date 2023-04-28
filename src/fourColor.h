@@ -42,7 +42,7 @@ private:
 
     bool heuristic();
     int bruteForce();
-    int bruteForceHelper(int n, time_point start, std::vector<int> &curColors);
+    int bruteForceHelper(int n, time_point start, const std::vector<int> &curColors);
     bool checkSolution();
 };
 
