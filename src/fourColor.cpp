@@ -57,6 +57,19 @@ void fourColorSolver::saveToFile(std::string &fileName) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
+void fourColorSolver::setNodesEdges(int n, const std::vector <std::pair<int, int>> &edges) {
+    nodeNum = n;
+    colors.resize(nodeNum, -1);
+    adjacentLists.resize(nodeNum, std::vector<int>());
+    for (auto &e : edges) {
+        u = e.first;
+        v = e.second;
+        adjacentLists[u].push_back(v);
+        adjacentLists[v].push_back(u);
+    }
+    return true;
+}
+
 bool fourColorSolver::heuristic() {
     // find valence for nodes
     std::vector<size_t> valence(nodeNum, 0);
@@ -215,7 +228,7 @@ int fourColorSolver::solveGraph() {
 //        return "BruteForce Success";
 //    }
     auto rst = bruteForce();
-    if (!checkSolution()) {
+    if (rst == SUCCESS && !checkSolution()) {
         rst = WRONG;
     }
     return rst;

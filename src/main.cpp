@@ -64,7 +64,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-
     auto start = std::chrono::high_resolution_clock::now();
     auto result = return_status_array[solver.solveGraph()];
     auto end = std::chrono::high_resolution_clock::now();
