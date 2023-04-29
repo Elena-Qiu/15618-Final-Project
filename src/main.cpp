@@ -17,29 +17,28 @@ using namespace std;
 //    auto scale = (float)atoi(argv[3]);
 //    int edgeTimeOut = atoi(argv[4]);
 //    int solveTimeOut = atoi(argv[5]);
-//    string inputFileName(argv[6]);
-//    string outputFileName = inputFileName + "_output.txt";
-//    inputFileName += ".txt";
-
+//    string inputFilePath(argv[6]);
+//    string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 4) + "_output.txt";
+//
 //    // generate test case
-//    testGenerator gen(n, e, scale, edgeTimeOut, inputFileName);
+//    testGenerator gen(n, e, scale, edgeTimeOut, inputFilePath);
 //    if (!gen.generate()) {
 //        return -1;
 //    }
-
+//
 //    // solve graph
 //    fourColorSolver solver(solveTimeOut);
-//    cout << "Load File: " << return_status_array[solver.loadFromFile(inputFileName)] << "\n";
-
+//    cout << "Load File: " << return_status_array[solver.loadFromFile(inputFilePath)] << "\n";
+//
 //    auto start = std::chrono::high_resolution_clock::now();
 //    auto result = return_status_array[solver.solveGraph()];
 //    auto end = std::chrono::high_resolution_clock::now();
-//    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
+//    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+//
 //    cout << "Solve Graph: " << result << "\n";
-//    cout << "Time Cost: " << duration << " ms\n";
-
-//    solver.saveToFile(outputFileName);
+//    cout << "Time Cost: " << duration << " s\n";
+//
+//    solver.saveToFile(outputFilePath);
 //    if (result == "Success") {
 //        return 0;
 //    } else {
@@ -59,6 +58,7 @@ int main(int argc, char *argv[]) {
     // solve graph
     int solveTimeOut = 60;
     fourColorSolver solver(solveTimeOut);
+
     auto fileLoadResult = return_status_array[solver.loadFromFile(inputFilePath)];
     cout << "Load File: " << fileLoadResult << "\n";
     if (fileLoadResult != "Success") {

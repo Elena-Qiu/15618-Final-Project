@@ -3,17 +3,19 @@
 //
 
 #include <queue>
+#include <unordered_set>
+#include <unordered_map>
 #include "conversion.h"
 
-int conversion::getPixel(int x, int y) {
+int Conversion::getPixel(int x, int y) {
     return pixelToNode[y * w + x];
 }
 
-void conversion::setPixel(int x, int y, int id) {
+void Conversion::setPixel(int x, int y, int id) {
     pixelToNode[y * w + x] = id;
 }
 
-int conversion::loadFromFile(std::string &fileName) {
+int Conversion::loadFromFile(std::string &fileName) {
     std::ifstream inFile;
     inFile.open(fileName);
     if (!inFile) {
@@ -42,50 +44,162 @@ int conversion::loadFromFile(std::string &fileName) {
     return SUCCESS;
 }
 
-void conversion::saveToFile(std::string &fileName) {
+void Conversion::saveToFile(std::string &fileName) {
     std::ofstream outFile(fileName);
     if (!outFile) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
         return;
     }
-//    for (int y = 0; y < h; y++) {
-//        for (int x = 0; x < w; x++) {
-//            int p = getPixel(x, y);
-//            outFile << p << " ";
-//        }
-//        outFile << std::endl;
-//    }
-    for (auto &p : pixelToNode) {
-        outFile << p << std::endl;
+    outFile << nodeNum << std::endl;
+    for (auto &e : edges) {
+        outFile << e.first << " " << e.second << std::endl;
     }
     outFile.close();
     if (!outFile)
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
-void conversion::findNodes() {
-//    for (let y = 0; y < h; y++) {
-//        for (let x = 0; x < w; x++) {
-//            if (get_nodes_map(x, y) === -1) {
-//                let local_marginal_points = fill_area(x, y, nodes_num);
-//                if (local_marginal_points.length > 0) {
-//                    nodes_num ++;
-//                    marginal_points.push(local_marginal_points);
-//                }
-//            }
-//        }
-//    }
+void Conversion::findNodes() {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             if (getPixel(x, y) == -1) {
-
+                auto localMarginalPoints = fillArea(x, y, nodeNum);
+                if (!localMarginalPoints.empty()) {
+                    nodeNum++;
+                    marginalPoints.push_back(localMarginalPoints);
+                }
             }
         }
     }
 }
 
-void conversion::fillArea() {
-    std::vector<int> localMarginalPoints;
-    std::queue<int> qu;
+const std::vector<Point>& Conversion::fillArea(int x, int y, int id) {
+    int n = 0;
+    std::queue<Point> qu;
+    qu.emplace({x,y});
+    std::vector<Point> localMarginalPoints;
 
+    while (!qu.empty()) {
+        // pop point from list and color it
+        Point p = qu.pop();
+        bool is_marginal = false;
+        setPixel(p.x, p.y, id);
+        n += 1;
+
+        // check neighbors
+        if (getPixel(p.x, p.y + 1) == -1)
+            qu.push({p.x, p.y + 1});
+        else if (getPixel(p.x, p.y + 1) == -2)
+            is_marginal = true;
+        if (getPixel(p.x, p.y - 1) == -1)
+            qu.push({p.x, p.y - 1});
+        else if (getPixel(p.x, p.y - 1) == -2)
+            is_marginal = true;
+        if (getPixel(p.x + 1, p.y) == -1)
+            qu.push({p.x + 1, p.y});
+        else if (getPixel(p.x + 1, p.y) == -2)
+            is_marginal = true;
+        if (getPixel(p.x - 1, p.y) == -1)
+            qu.push({p.x - 1, p.y});
+        else if (getPixel(p.x - 1, p.y) == -2)
+            is_marginal = true;
+
+        if (is_marginal)
+            localMarginalPoints.push_back(p)
+    }
+    // one-pixel bug: if only one pixel, don't count it as separate area
+    if (n == 1) {
+        setPixel(x, y, -2);
+        localMarginalPoints.empty();
+    }
+   return localMarginalPoints;
+}
+
+
+double getDistance(int x1, int y1, int x2, int y2) {
+    return sqrt((double)(x1 - x2) * (double)(x1 - x2) + (double)(y1 - y2) * (double)(y1 - y2));
+}
+
+void Conversion::findEdges() {
+    std::vector<std::unordered_map<int,int>> tmpEdges(nodeNum);
+    std::vector<std::unordered_set<int>> adjacentLists(nodeNum);
+
+    // compare and check if nodes have an edge
+    for (int i = 0; i < nodeNum; i++) {
+        std::unordered_set<int> visited_neighbors; // neighbors that have been visited
+        vector<Point>& mp = marginalPoints[i];
+        for (Point &p : mp) {
+            // check the surrounding points of p to see if they belong to other nodes
+            for (int k = -MAX_LINE_THICKNESS; k < MAX_LINE_THICKNESS; k++) {
+                for (int l = -MAX_LINE_THICKNESS; l < MAX_LINE_THICKNESS; l++) {
+                    int tmpx = p.x + k;
+                    int tmpy = p.y + l;
+                    // if out of distance, skip
+                    if (getDistance(tmpx, tmpy, p.x, p.y) >= (double)MAX_LINE_THICKNESS)
+                        continue;
+                    int global_idx = tmpy * w + tmpx;
+                    // if already visited, skip
+                    if (visited_neighbors.count(global_idx))
+                        continue;
+                    visited_neighbors.insert(global_idx);
+
+                    int tmpId = getPixel(tmpx, tmpy);
+                    if (tmpId >= 0 && tmpId != i) {
+                        // if already added as an edge, skip
+                        if (adjacentLists[i].count(tmpId))
+                            continue;
+                        // if already added as a temporary edge, increment the counter
+                        if (tmpEdges[i].count(tmpId)) {
+                            tmpEdges[i][tmpId] += 1;
+                            if (tmpEdges[i][tmpId] > EDGE_THRESHOLD) {
+                                adjacentLists[i].insert(tmpId);
+                                adjacentLists[tmpId].insert(i);
+                            }
+                        } else {
+                            // add the edge to temp edges array
+                            tmpEdges[i][tmpId] = 1;
+                            tmpEdges[tmpId][i] = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // convert adjacentLists to Edges
+    for (int i = 0; i < nodeNum; i++) {
+        auto tmp = adjacentLists[i];
+        std::vector<int> neighbors;
+        neighbors.assign(tmp.begin(), tmp.end());
+        std::sort(neighbors.begin(), neighbors.end());
+        for (auto &j : neighbors) {
+            if (j > i) {
+                edges.push_back({i, j});
+            }
+        }
+    }
+}
+
+int Conversion::solveMap() {
+    findNodes();
+    findEdges();
+    int rst = SUCCESS;
+    if (!testMode) {
+        graphSolver.setNodesEdges(n, edges);
+        rst = graphSolver.solveGraph();
+        if (rst != SUCCESS) {
+            return rst;
+        }
+        auto colors = graphSolver.getColors();
+        // update pixelToNode with colors
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int id = getPixel(x, y);
+                if (id >= 0) {
+                    setPixel(x, y, colors[id]);
+                }
+            }
+        }
+    }
+    return rst;
 }

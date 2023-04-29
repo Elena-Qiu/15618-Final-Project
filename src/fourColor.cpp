@@ -58,17 +58,16 @@ void fourColorSolver::saveToFile(std::string &fileName) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
-void fourColorSolver::setNodesEdges(int n, const std::vector <std::pair<int, int>> &edges) {
+void fourColorSolver::setNodesEdges(int n, const std::vector<std::pair<int, int>> &edges) {
     nodeNum = n;
     colors.resize(nodeNum, -1);
     adjacentLists.resize(nodeNum, std::vector<int>());
     for (auto &e : edges) {
-        u = e.first;
-        v = e.second;
+        int u = e.first;
+        int v = e.second;
         adjacentLists[u].push_back(v);
         adjacentLists[v].push_back(u);
     }
-    return true;
 }
 
 bool fourColorSolver::heuristic() {
@@ -198,7 +197,7 @@ int fourColorSolver::bruteForceHelper(int n, time_point start, const std::vector
 
 int fourColorSolver::bruteForce() {
     if (putenv((char *) "OMP_CANCELLATION=true"))    {printf("set environment variable failed\n"); exit(-1);}
-    // printf("cancellation is %d\n", omp_get_cancellation());
+//     printf("cancellation is %d\n", omp_get_cancellation());
     // reinitialize colors to -1
     std::fill(colors.begin(), colors.end(), -1);
     auto start = std::chrono::high_resolution_clock::now();
@@ -213,7 +212,7 @@ int fourColorSolver::bruteForce() {
                 rst = SUCCESS;
                 rst = bruteForceHelper(0, start, colors_copy);
             }
-            std::cout << "[thread " << omp_get_thread_num() << "] result is " << return_status_array[rst] << std::endl;
+//            std::cout << "[thread " << omp_get_thread_num() << "] result is " << return_status_array[rst] << std::endl;
         }
     }
     return rst;

@@ -35,8 +35,6 @@ let edges; // adjacent list: edges[i] is an array with the indices j such that n
 let edges_num = 0;
 let marginal_points = [];   // array of marginal nodes (of type p5.vector)
 let visible_edges = []; // array of lines that cross an edge (each line is an array of two vectors)
-let node_mapping = [];  // node_mapping[i] is the color for node i
-let color_map = [];
 let lines = [];
 
 const STATES = {
@@ -60,10 +58,10 @@ function setup() {
     greencolor = color('#00FF00');
     pink = color('#FF00FF');
 
-    r = color('#E2041B');
-    b = color('#048AD0');
-    g = color('#338823');
-    y = color('#FAEA04');
+    r = color('#EAD0D1');
+    b = color('#C1CBD7');
+    g = color('#B5C4B1');
+    y = color('#FAEAD3');
     pixelDensity(1);
 
     update_status("Starting up.");
@@ -271,20 +269,30 @@ async function solve_graph() {
         return responseText;
     }
 
-    let input = convertPixelsToString(pixels);
+    let input = convertNodeMapToString(pixels);
     let solutionStr = await solveAtServer(input);
-    convertStringToPixels(solutionStr);
+    convertStringToNodeMap(solutionStr);
+    updatePixelsWithNodeMap();
 }
 
-function convertPixelsToString() {
-    // let string = new TextDecoder().decode(pixels);
-    // let string = String.fromCharCode.apply(null, pixels);
-    let string = '' + w + '\n' + h + '\n' + pixels.join(",");
+function convertNodeMapToString() {
+    let string = '' + w + '\n' + h + '\n' + nodes_map.join(",");
     return string + ",";
 }
 
-function convertStringToPixels(solutionStr) {
-    pixels = Uint8Array.from(solutionStr.split(",").map(c => parseInt(c)));
+function convertStringToNodeMap(solutionStr) {
+    nodes_map = Array.from(solutionStr.split(",").map(c => parseInt(c)));
+}
+
+function updatePixelsWithNodeMap() {
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            let id = get_nodes_map(x, y);
+            if (id >= 0) {
+                set_pixel_color(x, y, colors[id]);
+            }
+        }
+    }
 }
 
 function update_status(s) {
@@ -412,6 +420,7 @@ function button_solve() {
 function button_reset() {
     frameRate(30);
     lines = new Array();
+    nodes_map = new Array(w * h).fill(-1);
     state = STATES.DRAWING;
     solve_stage = -1;
     document.getElementById("log").innerHTML = '';
@@ -421,7 +430,6 @@ function button_reset() {
     edges_num = 0;
     visible_edges = [];
     marginal_points = [];
-    node_mapping = [];
 }
 
 function button_generate_image() {
