@@ -30,6 +30,11 @@ int fourColorSolver::loadFromFile(std::string &fileName) {
 
     // read edges
     while (std::getline(inFile, line)) {
+        // skip empty line
+        if (line.empty()) {
+            continue;
+        }
+
         int u, v;
         std::stringstream sstream(line);
         std::string str;

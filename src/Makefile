@@ -12,27 +12,28 @@ else
 CFLAGS += -O2 -fopenmp
 endif
 
-SOURCES := *.cpp
-HEADERS := *.h
+SOURCES_FOURCOLOR := fourColor.cpp main.cpp
+HEADERS_FOURCOLOR := fourColor.h
 
-TARGETBIN := fourcolor-$(CONFIGURATION)
+SOURCES_CONVERSION := conversion.cpp testConversion.cpp fourColor.cpp
+HEADERS_CONVERSION := conversion.h fourColor.h
+
+TARGETBIN_FOURCOLOR := fourcolor_$(CONFIGURATION)
+TARGETBIN_CONVERSION := conversion_$(CONFIGURATION)
 
 .SUFFIXES:
 .PHONY: all clean
 
-all: $(TARGETBIN)
+all: $(TARGETBIN_CONVERSION) $(TARGETBIN_FOURCOLOR)
 
-$(TARGETBIN): $(SOURCES) $(HEADERS)
-	$(CXX) -o $@ $(CFLAGS) $(SOURCES) 
+$(TARGETBIN_FOURCOLOR): $(SOURCES_FOURCOLOR) $(HEADERS_FOURCOLOR)
+	$(CXX) -o $@ $(CFLAGS) $(SOURCES_FOURCOLOR)
+$(TARGETBIN_CONVERSION): $(SOURCES_CONVERSION) $(HEADERS_CONVERSION)
+	$(CXX) -o $@ $(CFLAGS) $(SOURCES_CONVERSION)
 
 format:
 	clang-format -i *.cpp *.h
 
 clean:
 	rm -rf ./fourcolor-$(CONFIGURATION)
-
-# check:	default
-# 	./checker.pl
-
-FILES = *.cpp \
-		*.h
+	rm -rf ./conversion-$(CONFIGURATION)

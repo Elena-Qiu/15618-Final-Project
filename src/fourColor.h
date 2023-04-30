@@ -17,7 +17,8 @@ static const std::vector<std::string> return_status_array = {"Success", "Timeout
 class fourColorSolver {
 public:
     // constructor
-    explicit fourColorSolver(int t) {
+    explicit fourColorSolver(int t = 10) {
+        nodeNum = 0;
         timeOut = t;
     }
 
@@ -36,7 +37,7 @@ public:
 
 private:
     int timeOut;
-    int nodeNum;
+    int nodeNum{};
     std::vector<std::vector<int>> adjacentLists;
     std::vector<int> colors;
 
