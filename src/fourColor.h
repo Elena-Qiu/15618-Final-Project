@@ -16,22 +16,34 @@ static const std::vector<std::string> return_status_array = {"Success", "Timeout
 
 class fourColorSolver {
 public:
-    int nodeNum = 0;
-    int timeOut = 10;
-    std::vector<std::vector<int>> adjacentLists;
-    std::vector<int> colors;
-
-    explicit fourColorSolver(int t) {
+    // constructor
+    explicit fourColorSolver(int t = 10) {
+        nodeNum = 0;
         timeOut = t;
     }
+
+    // file input and output
     int loadFromFile(std::string &fileName);
     void saveToFile(std::string &fileName);
+
+    // API input and output
+    void setNodesEdges(int n, const std::vector<std::pair<int,int>>& edges);
+    std::vector<int>& getColors() {
+        return colors;
+    }
+
+    // algorithm
     int solveGraph();
 
 private:
+    int timeOut;
+    int nodeNum{};
+    std::vector<std::vector<int>> adjacentLists;
+    std::vector<int> colors;
+
     bool heuristic();
     int bruteForce();
-    int bruteForceHelper(int n, time_point start, std::vector<int> &curColors);
+    int bruteForceHelper(int n, time_point start, const std::vector<int> &curColors);
     bool checkSolution();
 };
 

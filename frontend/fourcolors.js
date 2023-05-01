@@ -231,9 +231,10 @@ async function solve_graph() {
         return responseText;
     }
 
-    let input = convertPixelsToString(pixels);
+    let input = convertNodeMapToString(pixels);
     let solutionStr = await solveAtServer(input);
-    convertStringToPixels(solutionStr);
+    convertStringToNodeMap(solutionStr);
+    updatePixelsWithNodeMap();
 }
 
 function convertPixelsToString() {
@@ -263,6 +264,7 @@ function button_solve() {
 function button_reset() {
     frameRate(30);
     lines = new Array();
+    nodes_map = new Array(w * h).fill(-1);
     state = STATES.DRAWING;
     document.getElementById("log").innerHTML = "";
     nodes = [];

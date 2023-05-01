@@ -2,9 +2,9 @@
 
 
 /**
- * convert a string representing pixel values to an uint8 (i.e. char) array
+ * convert a string representing nodes map values to an int array
  */
-static void constructInputArray(char *input, std::vector<char> &array) {
+static void constructInputArray(char *input, std::vector<int> &array) {
     char *itr = input, *mark = input;
     char delimeter = ',';
     unsigned counter = 0;
@@ -12,7 +12,7 @@ static void constructInputArray(char *input, std::vector<char> &array) {
         while (*itr != delimeter)   itr ++;
         *itr = 0;
 
-        array[counter++] = (char) atoi(mark);
+        array[counter++] = atoi(mark);
 
         itr ++;
         mark = itr;
@@ -21,12 +21,12 @@ static void constructInputArray(char *input, std::vector<char> &array) {
 
 
 /**
- * convert an uint8 (i.e. char) array to a string representing pixel values
+ * convert an int array to a string representing nodes map
  */
-static void constructOutputArray(std::vector<char> &array, char **output, size_t *solution_lenp) {
+static void constructOutputArray(std::vector<int> &array, char **output, size_t *solution_lenp) {
     std::string output_str;
-    for (char val : array)
-        output_str += std::to_string((unsigned char) val) + ",";
+    for (int val : array)
+        output_str += std::to_string(val) + ",";
 
     // get rid of the last comma
     size_t length = output_str.size() - 1;
@@ -54,14 +54,14 @@ bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
     *itr = 0;
     int h = atoi(mark);
     itr ++;
-    pixels_str = itr;
+    nodes_map_str = itr;
 
     sio_printf("width = %d, height = %d\n", w, h);
 
-    size_t length = w * h * 4;
-    std::vector<char> input_pixels(length);
-    std::vector<char> output_pixels(length);
-    constructInputArray(pixels_str, input_pixels);
+    size_t length = w * h;
+    std::vector<int> input_pixels(length);
+    std::vector<int> output_pixels(length);
+    constructInputArray(nodes_map_str, input_pixels);
 
     bool res = solveMapHelper(w, h, input_pixels, output_pixels);
 
