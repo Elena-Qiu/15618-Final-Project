@@ -1,11 +1,14 @@
-const w = 100;
-const h = 100;
-const MIN_DISTANCE = 10;
-const fileName = "testcases/naive.txt";
+const w = 1000;
+const h = 1000;
+// const fileName = "testcases/naive2.txt";
+const fileName = "testcases/good_40_100_5s.txt";
 
 const UNDEFINED = -1;
 const BOUNDARY = -2;
-const SKIPPED = -3;
+const FIXED = -3;
+const LINE_EXPANSION = 0;
+const MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
+const MIN_DISTANCE = MAX_LINE_THICKNESS + 2;
 let nodesNum;
 let origins = new Array();
 let boundaries;
@@ -34,6 +37,11 @@ const EXPAND_STATES = {
     IN_PROGRESS: 1,
     FAIL: 2,
 };
+const DETECT_STATES = {
+    OK: 0,
+    STOP: 1,
+    ERROR: 2,
+};
 
 function preload() {
     input = loadStrings(fileName);
@@ -54,7 +62,7 @@ function setup() {
     let canvas = createCanvas(w, h);
     canvas.id("canvas");
     canvas.parent(document.querySelector("#canvasContainer"));
-    frameRate(10);
+    frameRate(5);
     loadPixels();
     textSize(16);
 }
@@ -79,13 +87,12 @@ function draw() {
         }
         console.log("expand all lines");
         state = STATES.SHAPES;
-
     } else if (state === STATES.SHAPES) {
         let res = expandShapes();
         if (res === EXPAND_STATES.COMPLETED) {
             console.log("expanding all finished");
             state = STATES.FINISHED;
-        } else console.log("expanding in progress");
+        }
     } else if (state === STATES.FINISHED) {
         noLoop();
     } else {
@@ -218,7 +225,6 @@ function expandLines() {
     expandShapes();
 }
 
-
 // randomly permutate input array of any kind
 function randomPermutate(inputArr) {
     let array = inputArr.slice();
@@ -233,7 +239,6 @@ function randomPermutate(inputArr) {
     return results;
 }
 
-
 // try to expand all nodes by 1 layer
 function expandShapes() {
     if (completedOrigins.length == origins.length)
@@ -244,14 +249,14 @@ function expandShapes() {
         let nodeIdx = permutated[i];
         if (completedOrigins.has(nodeIdx)) continue;
 
-        if (expandNode(nodeIdx) === EXPAND_STATES.COMPLETED) completedOrigins.add(nodeIdx);
+        if (expandNode(nodeIdx) === EXPAND_STATES.COMPLETED)
+            completedOrigins.add(nodeIdx);
     }
 
     if (completedOrigins.size === origins.length)
         return EXPAND_STATES.COMPLETED;
     else return EXPAND_STATES.IN_PROGRESS;
 }
-
 
 // expand the area of the node[idx] by one layer
 function expandNode(nodeIdx) {
@@ -262,28 +267,33 @@ function expandNode(nodeIdx) {
         let globalIdx = boundary.pop();
         let x = globalIdx % w;
         let y = Math.floor(globalIdx / w);
-        
-        if (detectNeighborhood(x, y, nodeIdx) == false) {
-            console.log(`boundary (${x}, ${y}) is skipped`);
-            set_nodes_map(x, y, SKIPPED);
+
+        let res = detectNeighborhood(x, y, nodeIdx);
+        if (res == DETECT_STATES.STOP) {
+            set_nodes_map(x, y, FIXED);
             continue;
+        } else if (res == DETECT_STATES.ERROR) {
+            return EXPAND_STATES.FAIL;
         }
-        
+
         // try to expand to 8 surrounding neighbors
         set_nodes_map(x, y, nodeIdx);
         for (let i = -1; i <= 1; ++i) {
             for (let j = -1; j <= 1; ++j) {
                 let tempx = x + i;
                 let tempy = y + j;
-                if (i === 0 && j === 0)  continue;
-                if (tempx < 0 || tempx >= w || tempy < 0 || tempy >= h) continue;
+                if (i === 0 && j === 0) continue;
+                if (tempx < 0 || tempx >= w || tempy < 0 || tempy >= h)
+                    continue;
 
                 let pixel = get_nodes_map(tempx, tempy);
                 if (pixel === UNDEFINED) {
                     newBoundary.push(getGlobalIdx(tempx, tempy));
                     set_nodes_map(tempx, tempy, BOUNDARY);
                 } else if (pixel >= 0 && pixel != nodeIdx) {
-                    console.log(`impossible! node ${pixel}'s inner points and node ${nodeIdx}'s inner points are adjacent!`);
+                    console.log(
+                        `impossible! node ${pixel}'s inner points and node ${nodeIdx}'s inner points are adjacent!`
+                    );
                     return EXPAND_STATES.FAIL;
                 }
             }
@@ -301,22 +311,18 @@ function expandNode(nodeIdx) {
 // return true if this pixel can belong to node[global_idx], false otherwise
 function detectNeighborhood(x, y, nodeIdx) {
     // check whether it is the boundary of the entire map
-    if (x == 0 || x == w - 1 || y == 0 || y == h - 1)
-        return false;
+    if (x == 0 || x == w - 1 || y == 0 || y == h - 1) return DETECT_STATES.STOP;
 
     // check surrounding pixels for any inner points belonging to other nodes
     for (let i = -1; i <= 1; ++i) {
         for (let j = -1; j <= 1; ++j) {
             let tempx = x + i;
             let tempy = y + j;
-            if (i === 0 && j === 0)  continue;
+            if (i === 0 && j === 0) continue;
             if (tempx < 0 || tempx >= w || tempy < 0 || tempy >= h) continue;
 
             let pixel = get_nodes_map(tempx, tempy);
-            if (pixel >= 0 && pixel != nodeIdx) {
-                console.log(`pixel (${x}, ${y}) belonging to node ${nodeIdx} is adjacent to an inner point (${tempx}, ${tempy}) belonging to node ${pixel}`);
-                return false;
-            }
+            if (pixel >= 0 && pixel != nodeIdx) return DETECT_STATES.STOP;
         }
     }
 
@@ -325,18 +331,23 @@ function detectNeighborhood(x, y, nodeIdx) {
             let tempx = x + i;
             let tempy = y + j;
             if (tempx < 0 || tempx >= w || tempy < 0 || tempy >= h) continue;
-            if (dist(tempx, tempy, x, y) >= MIN_DISTANCE)       continue;
+            let distance = dist(tempx, tempy, x, y);
+            if (distance >= MIN_DISTANCE) continue;
 
             // there is an inner point of a non-connected node in the neighborhood
             let pixel = get_nodes_map(tempx, tempy);
-            if (pixel >= 0 && pixel != nodeIdx && edges[nodeIdx].includes(pixel) === false) {
-                console.log(`pixel (${x}, ${y}) belonging to node ${nodeIdx} is too close to an inner point (${tempx}, ${tempy}) belonging to node ${pixel}`);
-                return false;
+            if (
+                pixel >= 0 &&
+                pixel != nodeIdx &&
+                edges[nodeIdx].includes(pixel) === false
+            ) {
+                if (distance < MAX_LINE_THICKNESS) return DETECT_STATES.ERROR;
+                return DETECT_STATES.STOP;
             }
         }
     }
 
-    return true;
+    return DETECT_STATES.OK;
 }
 
 // apply nodes_map to actual pixels
@@ -346,7 +357,7 @@ function applyNodesMap() {
         for (let x = 0; x < w; ++x) {
             if (get_nodes_map(x, y) === BOUNDARY) {
                 set_pixel_color(x, y, black);
-            } else if (get_nodes_map(x, y) == SKIPPED) {
+            } else if (get_nodes_map(x, y) == FIXED) {
                 set_pixel_color(x, y, color("#FF0000"));
             } else {
                 set_pixel_color(x, y, white);
