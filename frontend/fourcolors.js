@@ -18,8 +18,10 @@ let MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
 let EDGE_THRESHOLD = 3;
 
 // colors
-let black;
-let white;
+let r;
+let b;
+let g;
+let y;
 
 // arrays
 let nodes_map; // size w*h, recording the id of the node for each pixel (-1 for undefined, -2 for pixels on edges)
@@ -27,6 +29,7 @@ let nodes_num = 0;
 let edges; // adjacent list: edges[i] is an array with the indices j such that node i and node j are connected
 let edges_num = 0;
 let lines = [];
+let colors = [];
 
 const STATES = {
     DRAWING: 0,
@@ -43,8 +46,11 @@ let canvas;
 
 /* Setting up canvas. */
 function setup() {
-    black = color("#000000");
-    white = color("#FFFFFF");
+    r = color('#EAD0D1');
+    b = color('#C1CBD7');
+    g = color('#B5C4B1');
+    y = color('#FAEAD3');
+
     pixelDensity(1);
 
     update_status("Starting up.");
@@ -237,15 +243,26 @@ async function solve_graph() {
     updatePixelsWithNodeMap();
 }
 
-function convertPixelsToString() {
+function updatePixelsWithNodeMap() {
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            let id = get_nodes_map(x, y);
+            if (id >= 0) {
+                set_pixel_color(x, y, colors[id]);
+            }
+        }
+    }
+}
+
+function convertNodeMapToString() {
     // let string = new TextDecoder().decode(pixels);
     // let string = String.fromCharCode.apply(null, pixels);
-    let string = "" + w + "\n" + h + "\n" + pixels.join(",");
+    let string = "" + w + "\n" + h + "\n" + nodes_map.join(",");
     return string + ",";
 }
 
-function convertStringToPixels(solutionStr) {
-    pixels = Uint8Array.from(solutionStr.split(",").map((c) => parseInt(c)));
+function convertStringToNodeMap(solutionStr) {
+    nodes_map = Array.from(solutionStr.split(",").map((c) => parseInt(c)));
 }
 
 function update_status(s) {
