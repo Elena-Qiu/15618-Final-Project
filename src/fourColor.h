@@ -26,12 +26,14 @@ public:
     }
     int loadFromFile(std::string &fileName);
     void saveToFile(std::string &fileName);
-    int solveGraph();
+    int solveGraph(bool par);
 
 private:
     bool heuristic();
-    int bruteForce();
-    int bruteForceHelper(int n, time_point start, const std::vector<int> &curColors);
+    int bruteForcePar();
+    int bruteForceSeq();
+    int bruteForceHelperPar(int n, time_point start, const std::vector<int> &curColors);
+    int bruteForceHelperSeq(int n, time_point start, const std::vector<int> &curColors);
     bool checkSolution();
 };
 
