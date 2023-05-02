@@ -2,9 +2,10 @@ SHELL = /bin/bash
 CC = g++
 CFLAGS = -g -Og -Wall -std=c++14 -I.
 CFLAGS += -MMD -D_FORTIFY_SOURCE=2 -D_XOPEN_SOURCE=700
+CFLAGS += -O2 -fopenmp
 
-DEPEND = csapp.h map_solver.h
-PROGRAM = server.cpp csapp.c map_solver.cpp map_solver_helper.cpp
+DEPEND = src/csapp.h src/util.h src/conversion.h src/fourColor.h
+PROGRAM = server.cpp src/csapp.c src/util.cpp src/fourColor.cpp src/conversion.cpp
 
 # Uncomment this to enable debug macros
 CFLAGS += -DDEBUG

@@ -6,7 +6,7 @@ Pure gold: https://p5js.org/reference
 */
 
 // server's connection option
-const IP = "http://ghc67.ghc.andrew.cmu.edu";
+const IP = "http://ghc63.ghc.andrew.cmu.edu";
 const PORT = "8080";
 const VALID_URI = "getMapSolution";
 
@@ -50,6 +50,7 @@ function setup() {
     b = color('#C1CBD7');
     g = color('#B5C4B1');
     y = color('#FAEAD3');
+    colors = [r, b, g, y]
 
     pixelDensity(1);
 
@@ -215,6 +216,20 @@ function print_nodes_map() {
     }
 }
 
+// set the color of the pixel[i, j] to c
+function set_pixel_color(x, y, c) {
+    let d = pixelDensity();
+    for (let i = 0; i < d; i++) {
+        for (let j = 0; j < d; j++) {
+            let index = 4 * ((y * d + j) * width * d + (x * d + i));
+            pixels[index] = red(c);
+            pixels[index + 1] = green(c);
+            pixels[index + 2] = blue(c);
+            pixels[index + 3] = alpha(c);
+        }
+    }
+}
+
 /* Main solving method.
 The solving takes place in stages and logs its progress. */
 async function solve(callback) {
@@ -282,6 +297,14 @@ function button_reset() {
     frameRate(30);
     lines = new Array();
     nodes_map = new Array(w * h).fill(-1);
+    for (let y = 0; y < h; ++y) {
+        if (y === 0 || y === h - 1) {
+            for (let x = 0; x < w; ++x) set_nodes_map(x, y, -2);
+        } else {
+            set_nodes_map(0, y, -2);
+            set_nodes_map(w - 1, y, -2);
+        }
+    }
     state = STATES.DRAWING;
     document.getElementById("log").innerHTML = "";
     nodes = [];

@@ -13,6 +13,6 @@
 #include "csapp.h"
 
 bool solveMap(char *input, char **solutionp, size_t *solution_lenp);
-bool solveMapHelper(int w, int h, const std::vector<char> &input, std::vector<char> &output);
+bool solveMapHelper(int w, int h, const std::vector<int> &input, std::vector<int> &output);
 
 #endif

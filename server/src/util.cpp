@@ -1,5 +1,6 @@
-#include "map_solver.h"
-
+#include "util.h"
+#include "fourColor.h"
+#include "conversion.h"
 
 /**
  * convert a string representing nodes map values to an int array
@@ -44,7 +45,7 @@ static void constructOutputArray(std::vector<int> &array, char **output, size_t 
  * @param solution_lenp[out] a pointer to the length of the solution string (whose value needs to be updated in this function)
  */
 bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
-    char *itr = input, *mark = input, *pixels_str = NULL;
+    char *itr = input, *mark = input, *nodes_map_str = NULL;
     while (*itr != '\n')    itr ++;
     *itr = 0;
     int w = atoi(mark);
@@ -67,4 +68,44 @@ bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
 
     if (res)    constructOutputArray(output_pixels, solutionp, solution_lenp);
     return res;
+}
+
+
+/**
+ * map solver
+ * @param w[in] the width of the image
+ * @param h[in] the height of the image
+ * @param input[in] the array of nodes map (length: w * h)
+ * @param output[out] the array of nodes map (length: w * h)
+                    (memory for this array already allocated, so no need to malloc)
+ *
+ * @return true if solving succeeds, false otherwise
+ */
+bool solveMapHelper(int w, int h, const std::vector<int> &input, std::vector<int> &output) {
+    std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
+    int timeout = 10;
+    bool seq = true;
+    std::string adjFile = "adj.txt";
+    std::string colorFile = "colors.txt";
+    std::string nodesMapFile = "nodesMap.txt";
+
+    Conversion converter;
+    fourColorSolver solver(timeout, seq);
+
+    converter.setPixelToNodeArray(w, h, input);
+    converter.convertMapToGraph();
+
+    solver.setGraph(converter.getNodeNum(), converter.getEdges());
+    solver.saveNodeAdjListToFile(adjFile);
+    
+    int rst = solver.solveGraph();
+    std::cout << "INFO: Solve Graph: " << return_status_array[rst] << "\n";
+    solver.saveToFile(colorFile);
+
+    converter.addMapColors(solver.getColors());
+
+    converter.saveNodesMapToFile(nodesMapFile);
+
+    output = converter.getPixelToNodeArray();
+    return true;
 }
