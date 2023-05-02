@@ -6,13 +6,13 @@ Pure gold: https://p5js.org/reference
 */
 
 // server's connection option
-const IP = "http://ghc63.ghc.andrew.cmu.edu";
+const IP = "http://ghc67.ghc.andrew.cmu.edu";
 const PORT = "8080";
 const VALID_URI = "getMapSolution";
 
 /* Some general variables. */
-let h = 200; // height of the canvas
-let w = 200; // width of the canvas
+let h = 20; // height of the canvas
+let w = 20; // width of the canvas
 let LINE_EXPANSION = 1;
 let MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
 let EDGE_THRESHOLD = 3;
@@ -22,20 +22,22 @@ let r;
 let b;
 let g;
 let y;
+let white;
+let black;
 
 // arrays
 let nodes_map; // size w*h, recording the id of the node for each pixel (-1 for undefined, -2 for pixels on edges)
 let nodes_num = 0;
 let edges; // adjacent list: edges[i] is an array with the indices j such that node i and node j are connected
 let edges_num = 0;
-let lines = [];
 let colors = [];
 
 const STATES = {
     DRAWING: 0,
-    START_SOLVING: 1,
-    SOLVING: 2,
-    FINISHED: 3,
+    IMAGE_LOADED: 1,
+    START_SOLVING: 2,
+    SOLVING: 3,
+    FINISHED: 4,
 };
 
 let start, end;
@@ -50,7 +52,9 @@ function setup() {
     b = color('#C1CBD7');
     g = color('#B5C4B1');
     y = color('#FAEAD3');
-    colors = [r, b, g, y]
+    white = color("#FFFFFF");
+    black = color("#000000");
+    colors = [r, b, g, y];
 
     pixelDensity(1);
 
@@ -62,7 +66,7 @@ function setup() {
     loadPixels();
     frameRate(30);
     textSize(16);
-    start = createVector(w / 2, h / 2);
+    // start = createVector(w / 2, h / 2);
 
     nodes_map = new Array(w * h).fill(-1);
     for (let y = 0; y < h; ++y) {
@@ -79,7 +83,9 @@ function setup() {
 function draw() {
     switch (state) {
         case STATES.DRAWING:
-            display_lines();
+            displayNodesMap();
+            break;
+        case STATES.IMAGE_LOADED:
             break;
         case STATES.START_SOLVING:
             state = STATES.SOLVING;
@@ -97,21 +103,15 @@ function draw() {
     }
 }
 
-function display_lines() {
-    background(255);
-    stroke(0);
-    strokeWeight(1);
-    fill(255);
-    rect(0, 0, w - 1, h - 1);
-
-    // draw lines
-    for (let i = 0; i < lines.length; i++) {
-        let a = lines[i][0];
-        let b = lines[i][1];
-        draw_line(a.x, a.y, b.x, b.y);
+function displayNodesMap() {
+    for (let i = 0; i < w; ++i) {
+        for (let j = 0; j < h; ++j) {
+            if (get_nodes_map(i, j) === -2)
+                set_pixel_color(i, j, black);
+        }
     }
+    updatePixels();
 
-    // draw temporary line while dragging
     if (dragging) draw_line(start.x, start.y, end.x, end.y);
 }
 
@@ -122,7 +122,7 @@ function draw_point(x, y) {
         for (let j = 0; j < 2 * LINE_EXPANSION + 1; j++) {
             let px = x - LINE_EXPANSION + i;
             let py = y - LINE_EXPANSION + j;
-            if (px < w && py < h) point(px, py);
+            if (px >= 0 && py >= 0 && px < w && py < h) point(px, py);
         }
     }
 }
@@ -138,6 +138,7 @@ function draw_line(x0, y0, x1, y1) {
 
     while (true) {
         draw_point(x0, y0);
+        // console.log(`draw point ${x0}, ${y0}`);
         if (x0 === x1 && y0 === y1) break;
         let e2 = 2 * err;
         if (e2 > -dy) {
@@ -163,8 +164,9 @@ function set_nodes_map_with_line(x0, y0, x1, y1) {
             for (let j = 0; j < 2 * LINE_EXPANSION + 1; j++) {
                 let px = x0 - LINE_EXPANSION + i;
                 let py = y0 - LINE_EXPANSION + j;
-                if (px < w && py < h) {
+                if (px >= 0 && py >= 0 && px < w && py < h) {
                     set_nodes_map(px, py, -2);
+                    console.log(`set nodes map ${px}, ${py}`);
                 }
             }
         }
@@ -194,7 +196,6 @@ function mousePressed() {
 function mouseReleased() {
     dragging = false;
     end = createVector(Math.floor(mouseX), Math.floor(mouseY));
-    lines.push([start, end]);
     // start = createVector(end.x, end.y); // build map by single clicks
 
     set_nodes_map_with_line(start.x, start.y, end.x, end.y);
@@ -253,6 +254,7 @@ async function solve_graph() {
     }
 
     let input = convertNodeMapToString(pixels);
+    console.log(input);
     let solutionStr = await solveAtServer(input);
     convertStringToNodeMap(solutionStr);
     updatePixelsWithNodeMap();
@@ -262,9 +264,12 @@ function updatePixelsWithNodeMap() {
     for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
             let id = get_nodes_map(x, y);
-            if (id >= 0) {
+            if (id >= 0 && id <= 3) {
                 set_pixel_color(x, y, colors[id]);
-            }
+            } 
+            // else if (id == -2) {
+            //     set_pixel_color(x, y, black);
+            // }
         }
     }
 }
@@ -288,14 +293,15 @@ function update_status(s) {
 /* -------- buttons -------- */
 
 function button_solve() {
-    solve_start = millis();
-    state = STATES.START_SOLVING;
+    if (state === STATES.DRAWING || state === STATES.IMAGE_LOADED) {
+        solve_start = millis();
+        state = STATES.START_SOLVING;
+    }
     frameRate(5);
 }
 
 function button_reset() {
     frameRate(30);
-    lines = new Array();
     nodes_map = new Array(w * h).fill(-1);
     for (let y = 0; y < h; ++y) {
         if (y === 0 || y === h - 1) {
@@ -329,9 +335,66 @@ function button_load_image(s) {
     let canvas = document.getElementById("canvas");
     let context = canvas.getContext("2d");
     let img = new Image();
-    state = STATES.SOLVING;
+    state = STATES.IMAGE_LOADED;
     img.onload = function () {
         context.drawImage(this, 0, 0, w, h);
+        loadPixels();
+        set_nodes_map_with_pixels();
     };
     img.src = s;
+}
+
+
+function set_nodes_map_with_pixels() {
+    for (let j = 0; j < h; ++j) {
+        for (let i = 0; i < w; ++i) {
+            if (check_pixel_color(i, j, white)) {
+                set_nodes_map(i, j, -1);
+            } else {
+                set_nodes_map(i, j, -2);
+            }
+        }
+    }
+
+    for (let y = 0; y < h; ++y) {
+        if (y === 0 || y === h - 1) {
+            for (let x = 0; x < w; ++x) set_nodes_map(x, y, -2);
+        } else {
+            set_nodes_map(0, y, -2);
+            set_nodes_map(w - 1, y, -2);
+        }
+    }
+}
+
+
+// check whether the color on pixel[x, y] is c
+function check_pixel_color(x, y, c) {
+    let pc = get_pixel_color(x, y);
+    return compare_colors(pc, c);
+}
+
+
+// get the color of the pixel[i, j]
+function get_pixel_color(x, y) {
+    let d = pixelDensity();
+    let base = 4 * (y * d * width * d + x * d);
+    return color(
+        pixels[base],
+        pixels[base + 1],
+        pixels[base + 2],
+        pixels[base + 3]
+    );
+}
+
+
+// compare whether two colors are equal
+function compare_colors(c1, c2) {
+    if (
+        red(c1) === red(c2) &&
+        green(c1) === green(c2) &&
+        blue(c1) === blue(c2) &&
+        alpha(c1) === alpha(c2)
+    )
+        return true;
+    return false;
 }
