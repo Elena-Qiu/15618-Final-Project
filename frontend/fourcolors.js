@@ -11,11 +11,14 @@ const PORT = "8080";
 const VALID_URI = "getMapSolution";
 
 /* Some general variables. */
-let h = 20; // height of the canvas
-let w = 20; // width of the canvas
-let LINE_EXPANSION = 1;
-let MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
-let EDGE_THRESHOLD = 3;
+const h = 1000; // height of the canvas
+const w = 1000; // width of the canvas
+const LINE_EXPANSION = 1;
+const MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
+const EDGE_THRESHOLD = 3;
+
+const BOUNDARY = -2;
+const UNDEFINED = -1;
 
 // colors
 let r;
@@ -68,13 +71,13 @@ function setup() {
     textSize(16);
     // start = createVector(w / 2, h / 2);
 
-    nodes_map = new Array(w * h).fill(-1);
+    nodes_map = new Array(w * h).fill(UNDEFINED);
     for (let y = 0; y < h; ++y) {
         if (y === 0 || y === h - 1) {
-            for (let x = 0; x < w; ++x) set_nodes_map(x, y, -2);
+            for (let x = 0; x < w; ++x) set_nodes_map(x, y, BOUNDARY);
         } else {
-            set_nodes_map(0, y, -2);
-            set_nodes_map(w - 1, y, -2);
+            set_nodes_map(0, y, BOUNDARY);
+            set_nodes_map(w - 1, y, BOUNDARY);
         }
     }
 }
@@ -106,8 +109,10 @@ function draw() {
 function displayNodesMap() {
     for (let i = 0; i < w; ++i) {
         for (let j = 0; j < h; ++j) {
-            if (get_nodes_map(i, j) === -2)
+            if (get_nodes_map(i, j) === BOUNDARY)
                 set_pixel_color(i, j, black);
+            else if (get_nodes_map(i, j) === UNDEFINED)
+                set_pixel_color(i, j, white);
         }
     }
     updatePixels();
@@ -138,7 +143,6 @@ function draw_line(x0, y0, x1, y1) {
 
     while (true) {
         draw_point(x0, y0);
-        // console.log(`draw point ${x0}, ${y0}`);
         if (x0 === x1 && y0 === y1) break;
         let e2 = 2 * err;
         if (e2 > -dy) {
@@ -165,8 +169,7 @@ function set_nodes_map_with_line(x0, y0, x1, y1) {
                 let px = x0 - LINE_EXPANSION + i;
                 let py = y0 - LINE_EXPANSION + j;
                 if (px >= 0 && py >= 0 && px < w && py < h) {
-                    set_nodes_map(px, py, -2);
-                    console.log(`set nodes map ${px}, ${py}`);
+                    set_nodes_map(px, py, BOUNDARY);
                 }
             }
         }
@@ -254,7 +257,6 @@ async function solve_graph() {
     }
 
     let input = convertNodeMapToString(pixels);
-    console.log(input);
     let solutionStr = await solveAtServer(input);
     convertStringToNodeMap(solutionStr);
     updatePixelsWithNodeMap();
@@ -299,13 +301,13 @@ function button_solve() {
 
 function button_reset() {
     frameRate(30);
-    nodes_map = new Array(w * h).fill(-1);
+    nodes_map = new Array(w * h).fill(UNDEFINED);
     for (let y = 0; y < h; ++y) {
         if (y === 0 || y === h - 1) {
-            for (let x = 0; x < w; ++x) set_nodes_map(x, y, -2);
+            for (let x = 0; x < w; ++x) set_nodes_map(x, y, BOUNDARY);
         } else {
-            set_nodes_map(0, y, -2);
-            set_nodes_map(w - 1, y, -2);
+            set_nodes_map(0, y, BOUNDARY);
+            set_nodes_map(w - 1, y, BOUNDARY);
         }
     }
     state = STATES.DRAWING;
@@ -314,6 +316,8 @@ function button_reset() {
     edges = [];
     nodes_num = 0;
     edges_num = 0;
+
+    loop();
 }
 
 function button_generate_image() {
@@ -346,19 +350,19 @@ function set_nodes_map_with_pixels() {
     for (let j = 0; j < h; ++j) {
         for (let i = 0; i < w; ++i) {
             if (check_pixel_color(i, j, white)) {
-                set_nodes_map(i, j, -1);
+                set_nodes_map(i, j, UNDEFINED);
             } else {
-                set_nodes_map(i, j, -2);
+                set_nodes_map(i, j, BOUNDARY);
             }
         }
     }
 
     for (let y = 0; y < h; ++y) {
         if (y === 0 || y === h - 1) {
-            for (let x = 0; x < w; ++x) set_nodes_map(x, y, -2);
+            for (let x = 0; x < w; ++x) set_nodes_map(x, y, BOUNDARY);
         } else {
-            set_nodes_map(0, y, -2);
-            set_nodes_map(w - 1, y, -2);
+            set_nodes_map(0, y, BOUNDARY);
+            set_nodes_map(w - 1, y, BOUNDARY);
         }
     }
 }
