@@ -250,3 +250,17 @@ void Conversion::addMapColors(const std::vector<int>& colors) {
         }
     }
 }
+
+bool Conversion::checkNodesMap() {
+    bool rst = true;
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            int id = getPixel(x, y);
+            if (id == -1) {
+                std::cout << "pixel[" << x << "][" << y << "] is -1\n";
+                rst = false;
+            }
+        }
+    }
+    return rst;
+}

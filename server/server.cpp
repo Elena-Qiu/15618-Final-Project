@@ -316,7 +316,8 @@ static bool construct_response(char *solution, size_t solution_len , char **resp
     if (new_length > MAXBUF) {
         *response = (char *) Realloc(*response, new_length + 1);
     }
-    strcat(*response, solution);
+    // strcat(*response, solution)
+    memcpy(*response + *response_lenp, solution, solution_len);
     // dbg_printf("Response:\n%s", *response);
 
     *response_lenp = new_length;

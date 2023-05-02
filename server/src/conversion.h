@@ -59,6 +59,7 @@ public:
     // debug
     void printPixelToNodes();
     void saveNodesMapToFile(std::string &fileName);
+    bool checkNodesMap();
 
     //TODO: revise this
     int getPixel(int x, int y);

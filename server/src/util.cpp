@@ -94,6 +94,8 @@ bool solveMapHelper(int w, int h, const std::vector<int> &input, std::vector<int
 
     converter.setPixelToNodeArray(w, h, input);
     converter.convertMapToGraph();
+    std::cout << "Check nodes map is " << converter.checkNodesMap() << std::endl;
+    converter.saveNodesMapToFile(nodesMapFile);
 
     solver.setGraph(converter.getNodeNum(), converter.getEdges());
     solver.saveNodeAdjListToFile(adjFile);
@@ -103,8 +105,8 @@ bool solveMapHelper(int w, int h, const std::vector<int> &input, std::vector<int
     solver.saveToFile(colorFile);
 
     converter.addMapColors(solver.getColors());
-
-    converter.saveNodesMapToFile(nodesMapFile);
+    
+    
 
     output = converter.getPixelToNodeArray();
     return true;
