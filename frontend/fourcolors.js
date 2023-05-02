@@ -266,10 +266,7 @@ function updatePixelsWithNodeMap() {
             let id = get_nodes_map(x, y);
             if (id >= 0 && id <= 3) {
                 set_pixel_color(x, y, colors[id]);
-            } 
-            // else if (id == -2) {
-            //     set_pixel_color(x, y, black);
-            // }
+            }
         }
     }
 }
