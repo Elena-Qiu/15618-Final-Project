@@ -212,7 +212,7 @@ void Conversion::findEdges() {
                         } else {
                             // add the edge to temp edges array
                             tmpEdges[i].insert({tmpId, 1});
-                            tmpEdges[tmpId].insert({i, 1});
+                            // tmpEdges[tmpId].insert({i, 1});
                         }
                     }
                 }
