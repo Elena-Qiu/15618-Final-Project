@@ -1,7 +1,7 @@
-const w = 1000;
-const h = 1000;
+const w = 100;
+const h = 100;
 // const fileName = "testcases/naive2.txt";
-const fileName = "testcases/good_40_100_5s.txt";
+const fileName = "testcases/naive3.txt";
 
 const UNDEFINED = -1;
 const BOUNDARY = -2;
@@ -102,6 +102,7 @@ function draw() {
     applyNodesMap();
     updatePixels();
 }
+
 
 // read the map from testcases
 function readTestCase() {
