@@ -66,7 +66,6 @@ public:
 
     // for parallel
     void findNodesPar(bool bfs=true);
-    void findEdgesPar();
 
 private:
     int w;
@@ -88,18 +87,24 @@ private:
     // for parallel
     const int GRID_DIM = 8;
     std::vector<std::vector<int>> pixelToNodePar;
+    std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
 
     void splitNodesMap(int gridDim);
-    int getPixelPar(int gridIdxX, int gridIdxY, int x, int y);
-    void setPixelPar(int gridIdxX, int gridIdxY, int x, int y, int id);
+    int getPixelPar(int gridIdxX, int gridIdxY, int localX, int localY);
+    int getPixelPar(int globalX, int globalY);
+    void setPixelPar(int gridIdxX, int gridIdxY, int localX, int localY, int id);
+    void setPixelPar(int globalX, int globalY, int id);
     int getGridWidth(int gridIdxX);
     int getGridHeight(int gridIdxY);
     int encodeNodeId(int gridIdxX, int gridIdxY, int nodeId);
     int getGlobalX(int gridIdxX, int localX);  // x idx in 2d array
     int getGlobalY(int gridIdxY, int localY);  // y idx in 2d array
+    int getGridIdxX(int globalX);
+    int getGridIdxY(int globalY);
+    int getLocalX(int localX);
+    int getLocalY(int localY);
 
     std::vector<Point> fillAreaPar(int x, int y, int id, bool bfs);
-    void findNodesPar(bool bfs);
     void findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
     void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints);
 };

@@ -138,14 +138,15 @@ void Conversion::findNodesPar(bool bfs) {
     splitNodesMap();
 
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
-    std::vector<std::vector<std::pair<int, int>>> nodePairsPerGrid(GRID_DIM * GRID_DIM);
+    std::vector<std::unordered_set<std::pair<int, int>>> nodePairsPerGrid(GRID_DIM * GRID_DIM);
+    std::vector<std::vector<int>> encodedNodeIdPerGrid(GRID_DIM * GRID_DIM);
 
     #pragma omp parallel for schedule(dynamic) 
     {
         int threadId = omp_get_thread_num();
 
         // step 2: use openmp to let different nodes process individual grids
-        findNodesForGrid(bfs, threadId, marginalPointsPerGrid[threadId]);
+        findNodesForGrid(bfs, threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
         
         // step 3: find node idx pairs that belong to the same global node in parallel
         findNodePairsForGrid(threadId, nodePairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
@@ -156,17 +157,34 @@ void Conversion::findNodesPar(bool bfs) {
     
     // step 5: let each grid updates its node ids in parallel using omp
     // may also convert 4d array back to 2d array in this step
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) shared(nodeIdMapping)
     {
         int threadId = omp_get_thread_num();
         // TODO
+        updateNodeIpForGrid(threadId);
     }
 
     // step 6: update the global marginal points
-
+    
 }
 
-void Conversion::findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints) {
+void Conversion::updateNodeIpForGrid(int threadId) {
+    int gridIdxX = threadId % GRID_DIM;
+    int gridIdxY = threadId / GRID_DIM;
+    int localW = getGridWidth(gridIdxX, gridIdxY);
+    int localH = getGridHeight(gridIdxX, gridIdxY);
+
+    for (int localY = 0; localY < localH; ++localY) {
+        for (int localX = 0; localX < localW; ++localW) {
+            int encodedNodeId = encodeNodeId(gridIdxX, gridIdxY, getPixelPar(gridIdxX, gridIdxY, localX, localY));
+            int newNodeId = nodeIdMapping.at(encodedNodeId);
+            // setPixel(getGlobalX(gridIdxX, localX), getGlobalY(gridIdxY, localY), newNodeId);
+            setPixelPar(gridIdxX, gridIdxY, localX, localY, newNodeId);
+        }
+    }
+}
+
+void Conversion::findNodePairsForGrid(int threadId, std::unordered_set<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints) {
     // TODO: find node pairs and update marginal points
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
@@ -185,7 +203,7 @@ void Conversion::findNodePairsForGrid(int threadId, std::vector<std::pair<int, i
             if (lowerNodeId == -2)  // a new marginal point
                 gridMarginalPoints[localNodeId].push_back(Point{localX, localY});
             else if (lowerNodeId >= 0 && lowerNodeId != localNodeId) {  // a node pair found
-                gridNodePairs.push_back({
+                gridNodePairs.insert({
                     encodeNodeId(gridIdxX, gridIdxY, localNodeId),
                     encodeNodeId(gridIdxX, gridIdxY + 1, lowerNodeId)
                 });
@@ -213,7 +231,7 @@ void Conversion::findNodePairsForGrid(int threadId, std::vector<std::pair<int, i
     }
 }
 
-void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints) {
+void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds) {
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
     int localW = getGridWidth(gridIdxX, gridIdxY);
@@ -350,11 +368,27 @@ int Conversion::getPixelPar(int gridIdxX, int gridIdxY, int x, int y) {
     return pixelToNodePar[gridGlobalId][pixelLocalId];
 }
 
+int Conversion::getPixelPar(int globalX, int globalY) {
+    int gridIdxX = getGridIdxX(globalX);
+    int gridIdxY = getGridIdxY(globalY);
+    int localX = getLocalX(globalX);
+    int localY = getLocalY(globalY);
+    getPixelPar(gridIdxX, gridIdxY, localX, localY);
+}
+
 void Conversion::setPixelPar(int gridIdxX, int gridIdxY, int x, int y, int id) {
     int gridGlobalId = getGlobalY * GRID_DIM + gridIdxX;
     int gridW = getGridWidth(gridIdxX, gridIdxY);
     int pixelLocalId = y * gridW + x;
     pixelToNodePar[gridGlobalId][pixelLocalId] = id;
+}
+
+void Conversion::setPixelPar(int globalX, int globalY, int id) {
+    int gridIdxX = getGridIdxX(globalX);
+    int gridIdxY = getGridIdxY(globalY);
+    int localX = getLocalX(globalX);
+    int localY = getLocalY(globalY);
+    setPixelPar(gridIdxX, gridIdxY, localX, localY, id);
 }
 
 int Conversion::getGridWidth(int gridIdxX) {
@@ -401,6 +435,23 @@ int Conversion::getGlobalY(int gridIdxY, int localY) {
         baseGlobalY = gridIdxY * quotient + gridIdxY - GRID_DIM + remainder;
     return baseGlobalY + localY;
 }
+
+int Conversion::getGridIdxX(int globalX) {
+
+}
+
+int Conversion::getGridIdxY(int globalY) {
+
+}
+
+int Conversion::getLocalX(int localX) {
+
+}
+
+int Conversion::getLocalY(int localY) {
+
+}
+
 
 double getDistance(int x1, int y1, int x2, int y2) {
     return sqrt((double)(x1 - x2) * (double)(x1 - x2) + (double)(y1 - y2) * (double)(y1 - y2));
