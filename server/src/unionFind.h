@@ -2,7 +2,6 @@
 // Created by Qiu Yuqing on 2023/5/3.
 //
 #include <unordered_map>
-#include <utility>
 
 #ifndef SERVER_UNIONFIND_H
 #define SERVER_UNIONFIND_H
@@ -14,7 +13,7 @@ public:
 
     void unionPair(int x, int y);
     void compressMapping();
-    std::unordered_map<int,int> getMapping() { return mapping;};
+    std::unordered_map<int,int>& getMapping() { return mapping;};
 
 private:
     std::unordered_map<int,int> mapping;

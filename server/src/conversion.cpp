@@ -685,7 +685,7 @@ void Conversion::calGlobalIdx() {
         }
     }
     uf.compressMapping();
-    nodeIdMapping = uf.getMapping();
+    nodeIdMapping = std::move(uf.getMapping());
 }
 
 
