@@ -139,7 +139,6 @@ void Conversion::findNodesPar(bool bfs) {
 
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
     std::vector<std::unordered_set<std::pair<int, int>>> nodePairsPerGrid(GRID_DIM * GRID_DIM);
-    std::vector<std::vector<int>> encodedNodeIdPerGrid(GRID_DIM * GRID_DIM);
 
     #pragma omp parallel for schedule(dynamic) 
     {
@@ -438,7 +437,16 @@ int Conversion::getGlobalY(int gridIdxY, int localY) {
 }
 
 int Conversion::getGridIdxX(int globalX) {
-
+    int quotient = w / GRID_DIM;
+    int possibleGridIdxX = globalX / quotient;
+    while (true) {
+        int actualGridW = getGridWidth(possibleGridIdxX);
+        if (getGlobalX(possibleGridIdxX, 0) <= globalX && getGlobalX(possibleGridIdxX, actualGridW - 1) >= globalX)
+            break;
+        
+        possibleGridIdxX --;
+    }
+    return possibleGridIdxX;
 }
 
 int Conversion::getGridIdxY(int globalY) {
