@@ -1,14 +1,13 @@
 //
 // Created by Qiu Yuqing on 2023/4/28.
 //
-#include <queue>
+#include <deque>
 #include <unordered_set>
 #include <unordered_map>
 #include <fstream>
 #include <sstream>
 #include <math.h>
 #include <algorithm>
-#include <iostream>
 #include "conversion.h"
 
 int Conversion::getPixel(int x, int y) {
@@ -63,29 +62,8 @@ int Conversion::loadFromFile(std::string &fileName) {
         std::getline(sstream, str, '\n');
         pixelToNode.push_back((int)atoi(str.c_str()));
     }
-    // TODO: delete this
-    setPixel(w - 1, h - 1, -2);
     inFile.close();
     return SUCCESS;
-}
-
-void Conversion::saveNodesMapToFile(std::string &fileName) {
-    std::ofstream outFile(fileName);
-    if (!outFile) {
-        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
-        return;
-    }
-    outFile << w << std::endl;
-    outFile << h << std::endl;
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            outFile << getPixel(x, y) << " ";
-        }
-        outFile << std::endl;
-    }
-    outFile.close();
-    if (!outFile)
-        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
 void Conversion::saveToFile(std::string &fileName) {
@@ -95,9 +73,6 @@ void Conversion::saveToFile(std::string &fileName) {
         return;
     }
     outFile << nodeNum << std::endl;
-    for (int i = 0; i < nodeNum; i++) {
-        outFile << std::endl;
-    }
     for (auto &e : edges) {
         outFile << e.first << " " << e.second << std::endl;
     }
@@ -106,11 +81,11 @@ void Conversion::saveToFile(std::string &fileName) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
-void Conversion::findNodes() {
+void Conversion::findNodes(bool bfs) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             if (getPixel(x, y) == -1) {
-                auto localMarginalPoints = fillArea(x, y, nodeNum);
+                auto localMarginalPoints = fillArea(x, y, nodeNum, bfs);
                 if (!localMarginalPoints.empty()) {
                     nodeNum++;
                     marginalPoints.push_back(localMarginalPoints);
@@ -120,18 +95,23 @@ void Conversion::findNodes() {
     }
 }
 
-std::vector<Point> Conversion::fillArea(int x, int y, int id) {
+std::vector<Point> Conversion::fillArea(int x, int y, int id, bool bfs) {
     int n = 0;
     std::vector<std::vector<bool>> visited(w, std::vector<bool>(h, false));
     std::vector<Point> localMarginalPoints;
-    std::queue<Point> qu;
-    qu.emplace(Point{x, y});
+    std::deque<Point> qu;
+    if (bfs) {
+        qu.emplace_back(Point{x, y});
+    } else {
+        qu.emplace_front(Point{x, y});
+    }
+
     std::vector<std::pair<int,int>> dirs = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
 
     while (!qu.empty()) {
         // pop point from list and color it
         Point p = qu.front();
-        qu.pop();
+        qu.pop_front();
         bool is_marginal = false;
         setPixel(p.x, p.y, id);
         n += 1;
@@ -140,14 +120,20 @@ std::vector<Point> Conversion::fillArea(int x, int y, int id) {
         for (auto &dir : dirs) {
             int nx = p.x + dir.first;
             int ny = p.y + dir.second;
+            // check if marginal
+            if (getPixel(nx, ny) == -2)
+                is_marginal = true;
             // skip if visited
             if (visited[nx][ny]) {
                 continue;
             }
-            if (getPixel(nx, ny) == -1)
-                qu.push({nx, ny});
-            else if (getPixel(nx, ny) == -2)
-                is_marginal = true;
+            if (getPixel(nx, ny) == -1) {
+                if (bfs) {
+                    qu.push_back({nx, ny});
+                } else {
+                    qu.push_front({nx, ny});
+                }
+            }
             visited[nx][ny] = true;
         }
 
@@ -160,7 +146,7 @@ std::vector<Point> Conversion::fillArea(int x, int y, int id) {
         setPixel(x, y, -2);
         localMarginalPoints.clear();
     }
-   return localMarginalPoints;
+    return localMarginalPoints;
 }
 
 
@@ -212,7 +198,7 @@ void Conversion::findEdges() {
                         } else {
                             // add the edge to temp edges array
                             tmpEdges[i].insert({tmpId, 1});
-                            // tmpEdges[tmpId].insert({i, 1});
+                            tmpEdges[tmpId].insert({i, 1});
                         }
                     }
                 }
@@ -249,18 +235,4 @@ void Conversion::addMapColors(const std::vector<int>& colors) {
             }
         }
     }
-}
-
-bool Conversion::checkNodesMap() {
-    bool rst = true;
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            int id = getPixel(x, y);
-            if (id == -1) {
-                std::cout << "pixel[" << x << "][" << y << "] is -1\n";
-                rst = false;
-            }
-        }
-    }
-    return rst;
 }

@@ -4,14 +4,14 @@
 
 #include <vector>
 #include <iostream>
-#include <chrono>
+//#include "fourColor.h"
 
 #ifndef INC_15618_FINAL_PROJECT_CONVERSION_H
 #define INC_15618_FINAL_PROJECT_CONVERSION_H
 
 using time_point = std::chrono::high_resolution_clock::time_point;
 
-const int LINE_EXPANSION = 1;
+const int LINE_EXPANSION = 0;
 const int MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
 const int EDGE_THRESHOLD = 3;
 
@@ -22,8 +22,9 @@ typedef struct Point {
 
 class Conversion {
 public:
+
     // constructor
-    Conversion() {
+    explicit Conversion(int timeOut = 10) {
         w = 0;
         h = 0;
         nodeNum = 0;
@@ -39,12 +40,11 @@ public:
         h = _h;
         pixelToNode = arr;
     }
-
     std::vector<int>& getPixelToNodeArray() {
         return pixelToNode;
     }
 
-    int getNodeNum() {
+    int getNodeNum() const {
         return nodeNum;
     }
 
@@ -58,28 +58,25 @@ public:
 
     // debug
     void printPixelToNodes();
-    void saveNodesMapToFile(std::string &fileName);
-    bool checkNodesMap();
 
-    //TODO: revise this
-    int getPixel(int x, int y);
+    // TODO: fix this
+    void findNodes(bool bfs=true);
+    void findEdges();
 
 private:
     int w;
     int h;
     int nodeNum;
-    std::vector<std::pair<int,int>> edges;
     std::vector<int> pixelToNode;
     std::vector<std::vector<Point>> marginalPoints;
+    std::vector<std::pair<int,int>> edges;
 
+    int getPixel(int x, int y);
     void setPixel(int x, int y, int id);
 
-    void findNodes();
-    void findEdges();
-    std::vector<Point> fillArea(int x, int y, int id);
 
+    std::vector<Point> fillArea(int x, int y, int id, bool bfs);
 
-    // fix this
     enum return_status {SUCCESS, TIMEOUT, FAILURE, WRONG};
     std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
 };
