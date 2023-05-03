@@ -89,7 +89,7 @@ private:
     std::vector<std::unordered_set<std::pair<int, int>>> conflictPairsPerGrid; // collection of neighboring encoded node id
 
 
-    void splitNodesMap(int gridDim);
+    void splitNodesMap();
     int getPixelPar(int gridIdxX, int gridIdxY, int localX, int localY);
     int getPixelPar(int globalX, int globalY);
     void setPixelPar(int gridIdxX, int gridIdxY, int localX, int localY, int id);
@@ -101,12 +101,13 @@ private:
     int getGlobalY(int gridIdxY, int localY);  // y idx in 2d array
     int getGridIdxX(int globalX);
     int getGridIdxY(int globalY);
-    int getLocalX(int localX);
-    int getLocalY(int localY);
+    int getLocalX(int globalX);
+    int getLocalY(int globalY);
 
-    void fillAreaPar(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
-    void findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
-    void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints);
+    void fillAreaPar(int gridIdxX, int gridIdxY, int localW, int localH, int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
+    void findNodePairsForGrid(int threadId, std::unordered_set<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
+    void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
+    void updateNodeIpForGrid(int threadId);
 };
 
 

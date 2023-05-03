@@ -10,6 +10,8 @@
 #include <algorithm>
 #include "conversion.h"
 
+#include <omp.h>
+
 int Conversion::getPixel(int x, int y) {
     return pixelToNode[y * w + x];
 }
@@ -120,12 +122,12 @@ void Conversion::splitNodesMap() {
         for (int gridIdxX = 0; gridIdxX < GRID_DIM; ++gridIdxX) {
             int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
             pixelToNodePar.push_back(std::vector<int>());
-            int localW = getGridWidth(gridIdxX, gridIdxY);
-            int localH = getGridHeight(gridIdxX, gridIdxY);
+            int localW = getGridWidth(gridIdxX);
+            int localH = getGridHeight(gridIdxY);
             for (int localY = 0; localY < localH; ++localY) {
                 for (int localX = 0; localX < localW; ++localX) {
-                    int pixelGlobalIdxX = getGlobalX(gridIdxX, gridIdxY, localX);
-                    int pixelGlobalIdxY = getGlobalY(gridIdxX, gridIdxY, localY);
+                    int pixelGlobalIdxX = getGlobalX(gridIdxX, localX);
+                    int pixelGlobalIdxY = getGlobalY(gridIdxY, localY);
                     int nodeId = getPixel(pixelGlobalIdxX, pixelGlobalIdxY);
                     pixelToNodePar[gridGlobalId].push_back(nodeId);
                 }
@@ -139,8 +141,6 @@ void Conversion::findNodesPar(bool bfs) {
     splitNodesMap();
 
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
-    std::vector<std::unordered_set<std::pair<int, int>>> nodePairsPerGrid(GRID_DIM * GRID_DIM);
-    std::vector<std::vector<int>> encodedNodeIdPerGrid(GRID_DIM * GRID_DIM);
 
     #pragma omp parallel for schedule(dynamic) 
     {
@@ -172,8 +172,8 @@ void Conversion::findNodesPar(bool bfs) {
 void Conversion::updateNodeIpForGrid(int threadId) {
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
-    int localW = getGridWidth(gridIdxX, gridIdxY);
-    int localH = getGridHeight(gridIdxX, gridIdxY);
+    int localW = getGridWidth(gridIdxX);
+    int localH = getGridHeight(gridIdxY);
 
     for (int localY = 0; localY < localH; ++localY) {
         for (int localX = 0; localX < localW; ++localW) {
@@ -189,8 +189,8 @@ void Conversion::findNodePairsForGrid(int threadId, std::unordered_set<std::pair
     // TODO: find node pairs and update marginal points
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
-    int localW = getGridWidth(gridIdxX, gridIdxY);
-    int localH = getGridHeight(gridIdxX, gridIdxY);
+    int localW = getGridWidth(gridIdxX);
+    int localH = getGridHeight(gridIdxY);
 
     // lower boundary
     if (gridIdxY < GRID_DIM - 1) {
@@ -223,7 +223,7 @@ void Conversion::findNodePairsForGrid(int threadId, std::unordered_set<std::pair
             if (rightNodeId == -2)  // a new marginal point
                 gridMarginalPoints[localNodeId].push_back(Point{localX, localY});
             else if (rightNodeId >= 0 && rightNodeId != localNodeId) {  // a node pair found
-                gridNodePairs.push_back({
+                gridNodePairs.insert({
                     encodeNodeId(gridIdxX, gridIdxY, localNodeId),
                     encodeNodeId(gridIdxX + 1, gridIdxY, rightNodeId)
                 });
@@ -235,8 +235,8 @@ void Conversion::findNodePairsForGrid(int threadId, std::unordered_set<std::pair
 void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds) {
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
-    int localW = getGridWidth(gridIdxX, gridIdxY);
-    int localH = getGridHeight(gridIdxX, gridIdxY);
+    int localW = getGridWidth(gridIdxX);
+    int localH = getGridHeight(gridIdxY);
     int localNodeNum = 0;
     for (int y = 0; y < localH; y++) {
         for (int x = 0; x < localW; x++) {
@@ -244,6 +244,7 @@ void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vecto
                 std::vector<Point> localMarginalPoints;
                 fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, nodeNum, localMarginalPoints, bfs);
                 if (!localMarginalPoints.empty()) {
+                    gridEncodedNodeIds.push_back(encodeNodeId(gridIdxX, gridIdxY, localNodeNum));
                     localNodeNum++;
                     gridMarginalPoints.push_back(localMarginalPoints);
                 }
@@ -364,8 +365,8 @@ void Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
 }
 
 int Conversion::getPixelPar(int gridIdxX, int gridIdxY, int x, int y) {
-    int gridGlobalId = getGlobalY * GRID_DIM + gridIdxX;
-    int gridW = getGridWidth(gridIdxX, gridIdxY);
+    int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
+    int gridW = getGridWidth(gridIdxX);
     int pixelLocalId = y * gridW + x;
     return pixelToNodePar[gridGlobalId][pixelLocalId];
 }
@@ -379,8 +380,8 @@ int Conversion::getPixelPar(int globalX, int globalY) {
 }
 
 void Conversion::setPixelPar(int gridIdxX, int gridIdxY, int x, int y, int id) {
-    int gridGlobalId = getGlobalY * GRID_DIM + gridIdxX;
-    int gridW = getGridWidth(gridIdxX, gridIdxY);
+    int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
+    int gridW = getGridWidth(gridIdxX);
     int pixelLocalId = y * gridW + x;
     pixelToNodePar[gridGlobalId][pixelLocalId] = id;
 }
@@ -405,7 +406,7 @@ int Conversion::getGridWidth(int gridIdxX) {
 int Conversion::getGridHeight(int gridIdxY) {
     int quotient = h / GRID_DIM;
     int remainder = h % GRID_DIM;
-    if (gridIdxX < GRID_DIM - remainder)
+    if (gridIdxY < GRID_DIM - remainder)
         return quotient;
     else
         return quotient + 1;
@@ -439,19 +440,37 @@ int Conversion::getGlobalY(int gridIdxY, int localY) {
 }
 
 int Conversion::getGridIdxX(int globalX) {
+    int quotient = w / GRID_DIM;
+    int possibleGridIdxX = globalX / quotient;
 
+    // check whether possible is true
+    int possibleBaseX = getGlobalX(possibleGridIdxX, 0);
+    if (possibleBaseX > globalX)
+        possibleGridIdxX --;
+
+    return possibleGridIdxX;
 }
 
 int Conversion::getGridIdxY(int globalY) {
+    int quotient = h / GRID_DIM;
+    int possibleGridIdxY = globalY / quotient;
 
+    // check whether possible is true
+    int possibleBaseY = getGlobalY(possibleGridIdxY, 0);
+    if (possibleBaseY > globalY)
+        possibleGridIdxY --;
+
+    return possibleGridIdxY;
 }
 
-int Conversion::getLocalX(int localX) {
-
+int Conversion::getLocalX(int globalX) {
+    int gridIdxX = getGridIdxX(globalX);
+    return globalX - getGlobalX(gridIdxX, 0);
 }
 
-int Conversion::getLocalY(int localY) {
-
+int Conversion::getLocalY(int globalY) {
+    int gridIdxY = getGridIdxX(globalY);
+    return globalY - getGlobalY(gridIdxY, 0);
 }
 
 double getDistance(int x1, int y1, int x2, int y2) {
