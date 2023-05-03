@@ -30,8 +30,11 @@ int fourColorSolver::loadFromFile(std::string &fileName) {
 
     // read edges
     while (std::getline(inFile, line)) {
-        if (line.empty())
+        // skip empty line
+        if (line.empty()) {
             continue;
+        }
+
         int u, v;
         std::stringstream sstream(line);
         std::string str;
@@ -60,7 +63,26 @@ void fourColorSolver::saveToFile(std::string &fileName) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
-void fourColorSolver::setNodesEdges(int n, const std::vector<std::pair<int, int>> &edges) {
+void fourColorSolver::saveNodeAdjListToFile(std::string &fileName) {
+    std::ofstream outFile(fileName);
+    if (!outFile) {
+        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
+        return;
+    }
+    outFile << nodeNum << std::endl;
+    for (int i = 0; i < nodeNum; i++) {
+        outFile << i << ": [";
+        for (auto v : adjacentLists[i]) {
+            outFile << v << " ";
+        }
+        outFile << "]\n";
+    }
+    outFile.close();
+    if (!outFile)
+        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
+}
+
+void fourColorSolver::setGraph(int n, const std::vector<std::pair<int, int>> &edges) {
     nodeNum = n;
     colors.resize(nodeNum, -1);
     adjacentLists.resize(nodeNum, std::vector<int>());
@@ -84,8 +106,8 @@ bool fourColorSolver::heuristic() {
     std::iota(sortedIndices.begin(), sortedIndices.end(), 0);
     stable_sort(sortedIndices.begin(), sortedIndices.end(),
                 [&valence](size_t i1, size_t i2){
-                            return valence[i1] > valence[i2];
-                       }
+                    return valence[i1] > valence[i2];
+                }
     );
 
     // begin coloring using Welsh-Powell algorithm
@@ -136,58 +158,43 @@ int fourColorSolver::bruteForceHelperPar(int n, time_point start, const std::vec
     int rst = FAILURE;
     for (int c = 0; c < 4; c++) {
         auto privateColors = curColors;
-        #pragma omp task firstprivate(privateColors) shared(adjacentLists, rst) untied
+#pragma omp task firstprivate(privateColors) shared(adjacentLists, rst) untied
         {
-            #pragma omp cancellation point taskgroup
+#pragma omp cancellation point taskgroup
             if (rst != SUCCESS) {
                 bool canColor = true;
                 for (auto &v: adjacentLists[n]) {
+                    // printf("[thread %d] checking node %d (color %d) with its neighbor %d (color %d)\n", omp_get_thread_num(), n, c, v, privateColors[v]);
                     if (privateColors[v] == c) {
                         canColor = false;
+                        // printf("[thread %d] node %d cannot be colored with %d, so skip to next node\n", omp_get_thread_num(), n, c);
                         break;
                     }
                 }
                 if (canColor) {
                     privateColors[n] = c;
+                    // printf("[thread %d] node %d is colored with %d\n", omp_get_thread_num(), n, c);
                     int nextRst = bruteForceHelperPar(n + 1, start, privateColors);
                     if (nextRst == SUCCESS) {
-                        #pragma omp critical
+#pragma omp critical
                         {
                             rst = SUCCESS;
                         }
-                        #pragma omp cancel taskgroup
+                        // printf("[thread %d] found solution!\n", omp_get_thread_num());
+#pragma omp cancel taskgroup
                     } else {
+                        // printf("[thread %d] further trying indicates node %d cannot be colored with %d, return back\n", omp_get_thread_num(), n, c);
                         privateColors[n] = -1;
                     }
                 }
             }
         }
     }
-    #pragma omp taskwait
+#pragma omp taskwait
     return rst;
 }
 
-int fourColorSolver::bruteForcePar() {
-    if (putenv((char *) "OMP_CANCELLATION=true"))    {printf("set environment variable failed\n"); exit(-1);}
-    // reinitialize colors to -1
-    std::fill(colors.begin(), colors.end(), -1);
-    auto start = std::chrono::high_resolution_clock::now();
-    int rst;
-    #pragma omp parallel shared(start)
-    {
-        auto colors_copy = colors;
-        #pragma omp single
-        {
-            #pragma omp taskgroup
-            {
-                rst = bruteForceHelperPar(0, start, colors_copy);
-            }
-        }
-    }
-    return rst;
-}
-
-int fourColorSolver::bruteForceHelperSeq(int n, time_point start, const std::vector<int> &curColors) {
+int fourColorSolver::bruteForceHelperSeq(int n, time_point start) {
     // check timeout
     auto now = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - start).count();
@@ -197,37 +204,55 @@ int fourColorSolver::bruteForceHelperSeq(int n, time_point start, const std::vec
 
     // base case
     if (n == nodeNum) {
-        colors = curColors;
         return SUCCESS;
     }
 
-    int rst = FAILURE;
     for (int c = 0; c < 4; c++) {
-       bool canColor = true;
-       for (auto & v: adjacentLists[n]) {
-           if (colors[v] == c) {
-               canColor = false;
-               break;
-           }
-       }
-       if (!canColor) {
-           continue;
-       }
-       colors[n] = c;
-       rst = bruteForceHelperSeq(n + 1, start, colors);
-       if (rst == SUCCESS) {
-           break;
-       }
-       colors[n] = -1;
-   }
-   return rst;
+        bool canColor = true;
+        for (auto & v: adjacentLists[n]) {
+            if (colors[v] == c) {
+                canColor = false;
+                break;
+            }
+        }
+        if (!canColor) {
+            continue;
+        }
+        colors[n] = c;
+        if (bruteForceHelperSeq(n + 1, start) == SUCCESS) {
+            return SUCCESS;
+        }
+        colors[n] = -1;
+    }
+    return FAILURE;
 }
 
-int fourColorSolver::bruteForceSeq() {
+int fourColorSolver::bruteForce() {
+    if (putenv((char *) "OMP_CANCELLATION=true"))    {printf("set environment variable failed\n"); exit(-1);}
+    // reinitialize colors to -1
     std::fill(colors.begin(), colors.end(), -1);
     auto start = std::chrono::high_resolution_clock::now();
-    auto colors_copy = colors;
-    return bruteForceHelperSeq(0, start, colors_copy);
+
+    // sequential execution
+    if (seq) {
+        return bruteForceHelperSeq(0, start);
+    }
+
+    // parallel execution
+    int rst;
+#pragma omp parallel shared(start)
+    {
+        auto colors_copy = colors;
+#pragma omp single
+        {
+#pragma omp taskgroup
+            {
+                rst = SUCCESS;
+                rst = bruteForceHelperPar(0, start, colors_copy);
+            }
+        }
+    }
+    return rst;
 }
 
 bool fourColorSolver::checkSolution() {
@@ -235,8 +260,6 @@ bool fourColorSolver::checkSolution() {
         int color = colors[i];
         for (auto v : adjacentLists[i]) {
             if (color == colors[v]) {
-                printf("node %d (color %d) and node %d (color %d) are connected!\n",
-                        v, colors[v], i, color);
                 return false;
             }
         }
@@ -244,7 +267,7 @@ bool fourColorSolver::checkSolution() {
     return true;
 }
 
-int fourColorSolver::solveGraph(bool par) {
+int fourColorSolver::solveGraph() {
 //    if (heuristic()) {
 //        if (!checkSolution()) {
 //            return "Heuristic Failure";
@@ -256,11 +279,7 @@ int fourColorSolver::solveGraph(bool par) {
 //        }
 //        return "BruteForce Success";
 //    }
-    int rst;
-    if (par)
-        rst = bruteForcePar();
-    else
-        rst = bruteForceSeq();
+    auto rst = bruteForce();
     if (rst == SUCCESS && !checkSolution()) {
         rst = WRONG;
     }

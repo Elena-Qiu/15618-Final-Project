@@ -8,6 +8,7 @@
 #include <sstream>
 #include <math.h>
 #include <algorithm>
+#include <iostream>
 #include "conversion.h"
 
 int Conversion::getPixel(int x, int y) {
@@ -66,6 +67,25 @@ int Conversion::loadFromFile(std::string &fileName) {
     setPixel(w - 1, h - 1, -2);
     inFile.close();
     return SUCCESS;
+}
+
+void Conversion::saveNodesMapToFile(std::string &fileName) {
+    std::ofstream outFile(fileName);
+    if (!outFile) {
+        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
+        return;
+    }
+    outFile << w << std::endl;
+    outFile << h << std::endl;
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            outFile << getPixel(x, y) << " ";
+        }
+        outFile << std::endl;
+    }
+    outFile.close();
+    if (!outFile)
+        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
 void Conversion::saveToFile(std::string &fileName) {
@@ -140,7 +160,7 @@ std::vector<Point> Conversion::fillArea(int x, int y, int id) {
         setPixel(x, y, -2);
         localMarginalPoints.clear();
     }
-   return localMarginalPoints;
+    return localMarginalPoints;
 }
 
 
@@ -214,24 +234,31 @@ void Conversion::findEdges() {
     }
 }
 
-int Conversion::solveMap() {
+void Conversion::convertMapToGraph() {
     findNodes();
     findEdges();
-    int rst = SUCCESS;
-    if (!testMode) {
-        graphSolver.setNodesEdges(nodeNum, edges);
-        rst = graphSolver.solveGraph();
-        if (rst != SUCCESS) {
-            return rst;
+}
+
+void Conversion::addMapColors(const std::vector<int>& colors) {
+    // update pixelToNode with colors
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            int id = getPixel(x, y);
+            if (id >= 0) {
+                setPixel(x, y, colors[id]);
+            }
         }
-        auto colors = graphSolver.getColors();
-        // update pixelToNode with colors
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                int id = getPixel(x, y);
-                if (id >= 0) {
-                    setPixel(x, y, colors[id]);
-                }
+    }
+}
+
+bool Conversion::checkNodesMap() {
+    bool rst = true;
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            int id = getPixel(x, y);
+            if (id == -1) {
+                std::cout << "pixel[" << x << "][" << y << "] is -1\n";
+                rst = false;
             }
         }
     }

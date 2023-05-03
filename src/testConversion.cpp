@@ -7,9 +7,11 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
+    std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
+
     // ./conversion-release testcase
     if (argc != 2) {
-        cout << "ERROR: argument number should be 2: ./fourcolor-release testcaseFilePath\n";
+        cout << "ERROR: argument number should be 2: ./conversion-release testcaseFilePath\n";
         exit(-1);
     }
 
@@ -17,26 +19,21 @@ int main(int argc, char *argv[]) {
     string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 11) + "_output.txt";
 
     // solve graph
-    int solveTimeOut = 60;
-    Conversion solver(solveTimeOut);
-    solver.testMode = true;
+    Conversion converter;
 
-    auto fileLoadResult = return_status_array[solver.loadFromFile(inputFilePath)];
+    auto fileLoadResult = return_status_array[converter.loadFromFile(inputFilePath)];
     cout << "Load File: " << fileLoadResult << "\n";
     if (fileLoadResult != "Success") {
         return -1;
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto result = return_status_array[solver.solveMap()];
+    converter.convertMapToGraph();
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    cout << "Solve Map: " << result << "\n";
     cout << "Time Cost: " << duration << " ms\n";
 
-//    solver.printPixelToNodes();
-
-    solver.saveToFile(outputFilePath);
+    converter.saveToFile(outputFilePath);
     return 0;
 }
