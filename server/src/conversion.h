@@ -97,8 +97,8 @@ private:
     int getGlobalY(int gridIdxY, int localY);  // y idx in 2d array
     int getGridIdxX(int globalX);
     int getGridIdxY(int globalY);
-    int getLocalX(int localX);
-    int getLocalY(int localY);
+    int getLocalX(int globalX);
+    int getLocalY(int globalY);
 
     void fillAreaPar(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
     void findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);

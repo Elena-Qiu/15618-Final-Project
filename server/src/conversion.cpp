@@ -139,7 +139,6 @@ void Conversion::findNodesPar(bool bfs) {
     splitNodesMap();
 
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
-    std::vector<std::unordered_set<std::pair<int, int>>> nodePairsPerGrid(GRID_DIM * GRID_DIM);
 
     #pragma omp parallel for schedule(dynamic) 
     {
@@ -441,26 +440,35 @@ int Conversion::getGlobalY(int gridIdxY, int localY) {
 int Conversion::getGridIdxX(int globalX) {
     int quotient = w / GRID_DIM;
     int possibleGridIdxX = globalX / quotient;
-    while (true) {
-        int actualGridW = getGridWidth(possibleGridIdxX);
-        if (getGlobalX(possibleGridIdxX, 0) <= globalX && getGlobalX(possibleGridIdxX, actualGridW - 1) >= globalX)
-            break;
-        
+
+    // check whether possible is true
+    int possibleBaseX = getGlobalX(possibleGridIdxX, 0);
+    if (possibleBaseX > globalX)
         possibleGridIdxX --;
-    }
+
     return possibleGridIdxX;
 }
 
 int Conversion::getGridIdxY(int globalY) {
+    int quotient = h / GRID_DIM;
+    int possibleGridIdxY = globalY / quotient;
 
+    // check whether possible is true
+    int possibleBaseY = getGlobalY(possibleGridIdxY, 0);
+    if (possibleBaseY > globalY)
+        possibleGridIdxY --;
+
+    return possibleGridIdxY;
 }
 
-int Conversion::getLocalX(int localX) {
-
+int Conversion::getLocalX(int globalX) {
+    int gridIdxX = getGridIdxX(globalX);
+    return globalX - getGlobalX(gridIdxX, 0);
 }
 
-int Conversion::getLocalY(int localY) {
-
+int Conversion::getLocalY(int globalY) {
+    int gridIdxY = getGridIdxX(globalY);
+    return globalY - getGlobalY(gridIdxY, 0);
 }
 
 double getDistance(int x1, int y1, int x2, int y2) {
