@@ -453,17 +453,16 @@ int Conversion::getLocalY(int localY) {
 
 }
 
-
 double getDistance(int x1, int y1, int x2, int y2) {
     return sqrt((double)(x1 - x2) * (double)(x1 - x2) + (double)(y1 - y2) * (double)(y1 - y2));
 }
 
-void Conversion::findEdges() {
+void Conversion::findEdgesSeq() {
     std::vector<std::unordered_set<int>> adjacentLists(nodeNum);
-    std::vector<std::unordered_map<int,int>> tmpEdges(nodeNum);
     // compare and check if nodes have an edge
     for (int i = 0; i < nodeNum; i++) {
         std::unordered_set<int> visited_neighbors; // neighbors that have been visited
+        std::unordered_map<int,int> tmpEdges; // check potential edges
         std::vector<Point>& mp = marginalPoints[i];
         for (Point &p : mp) {
             // check the surrounding points of p to see if they belong to other nodes
@@ -493,16 +492,91 @@ void Conversion::findEdges() {
                         if (adjacentLists[i].count(tmpId))
                             continue;
                         // if already added as a temporary edge, increment the counter
-                        if (tmpEdges[i].count(tmpId)) {
-                            tmpEdges[i][tmpId] += 1;
-                            if (tmpEdges[i][tmpId] > EDGE_THRESHOLD) {
+                        if (tmpEdges.count(tmpId)) {
+                            tmpEdges[tmpId] += 1;
+                            if (tmpEdges[tmpId] > EDGE_THRESHOLD) {
                                 adjacentLists[i].insert(tmpId);
                                 adjacentLists[tmpId].insert(i);
                             }
                         } else {
                             // add the edge to temp edges array
-                            tmpEdges[i].insert({tmpId, 1});
-                            tmpEdges[tmpId].insert({i, 1});
+                            tmpEdges.insert({tmpId, 1});
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // convert adjacentLists to Edges
+    for (int i = 0; i < nodeNum; i++) {
+        auto tmp = adjacentLists[i];
+        std::vector<int> neighbors;
+        neighbors.assign(tmp.begin(), tmp.end());
+        std::sort(neighbors.begin(), neighbors.end());
+        for (auto &j : neighbors) {
+            if (j > i) {
+                edges.emplace_back(i, j);
+            }
+        }
+    }
+}
+
+void Conversion::findEdgesPar() {
+    std::vector<std::unordered_set<int>> adjacentLists(nodeNum);
+
+#pragma omp parallel for schedule(dynamic, 10) shared(adjacentLists)
+    // compare and check if nodes have an edge
+    for (int i = 0; i < nodeNum; i++) {
+        std::unordered_set<int> visited_neighbors; // neighbors that have been visited
+        std::unordered_map<int,int> tmpEdges; // track potential edges
+        std::vector<Point>& mp = marginalPoints[i];
+        for (Point &p : mp) {
+            // check the surrounding points of p to see if they belong to other nodes
+            for (int k = -MAX_LINE_THICKNESS; k < MAX_LINE_THICKNESS; k++) {
+                for (int l = -MAX_LINE_THICKNESS; l < MAX_LINE_THICKNESS; l++) {
+                    int tmpx = p.x + k;
+                    int tmpy = p.y + l;
+
+                    // if out of boundary, skip
+                    if (tmpx < 0 || tmpx >= w || tmpy < 0 || tmpy >= h) {
+                        continue;
+                    }
+
+                    // if out of distance, skip
+                    if (getDistance(tmpx, tmpy, p.x, p.y) >= (double)MAX_LINE_THICKNESS)
+                        continue;
+                    int global_idx = tmpy * w + tmpx;
+
+                    // if already visited, skip
+                    if (visited_neighbors.count(global_idx))
+                        continue;
+                    visited_neighbors.insert(global_idx);
+
+                    int tmpId = getPixel(tmpx, tmpy);
+                    if (tmpId >= 0 && tmpId != i) {
+                        // if already added as an edge, skip
+                        int exist = 0;
+#pragma omp critical
+                        {
+                            exist = adjacentLists[i].count(tmpId);
+                        }
+                        if (exist)
+                            continue;
+                        // if already added as a temporary edge, increment the counter
+                        if (tmpEdges.count(tmpId)) {
+                            tmpEdges[tmpId] += 1;
+                            if (tmpEdges[tmpId] > EDGE_THRESHOLD) {
+#pragma omp critical
+                                {
+                                    adjacentLists[i].insert(tmpId);
+                                    adjacentLists[tmpId].insert(i);
+                                }
+
+                            }
+                        } else {
+                            // add the edge to temp edges array
+                            tmpEdges.insert({tmpId, 1});
                         }
                     }
                 }
@@ -526,7 +600,11 @@ void Conversion::findEdges() {
 
 void Conversion::convertMapToGraph() {
     findNodes();
-    findEdges();
+    if (seq) {
+        findEdgesSeq();
+    } else {
+        findEdgesPar();
+    }
 }
 
 void Conversion::addMapColors(const std::vector<int>& colors) {

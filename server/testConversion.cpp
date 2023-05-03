@@ -7,6 +7,9 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
+    bool bfs = true;
+    bool seq = true;
+
     std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
 
     // ./conversion-release testcase
@@ -19,7 +22,7 @@ int main(int argc, char *argv[]) {
     string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 11) + "_output.txt";
 
     // solve graph
-    Conversion converter;
+    Conversion converter(seq);
 
     auto fileLoadResult = return_status_array[converter.loadFromFile(inputFilePath)];
     cout << "Load File: " << fileLoadResult << "\n";
@@ -28,12 +31,12 @@ int main(int argc, char *argv[]) {
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-    converter.findNodes();
+    converter.findNodes(bfs);
     auto end = std::chrono::high_resolution_clock::now();
     auto nodes_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     start = std::chrono::high_resolution_clock::now();
-    converter.findEdges();
+    converter.findEdgesSeq();
     end = std::chrono::high_resolution_clock::now();
     auto edges_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
