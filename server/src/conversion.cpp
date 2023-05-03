@@ -169,7 +169,7 @@ void Conversion::findNodesPar(bool bfs) {
         findNodesForGrid(bfs, threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
         
         // step 3: find node idx pairs that belong to the same global node in parallel
-        findNodePairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
+        findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
     }
 
     // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
@@ -223,7 +223,7 @@ void Conversion::updateNodeIpForGrid(int threadId) {
     }
 }
 
-void Conversion::findNodePairsForGrid(int threadId, std::unordered_set<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints) {
+void Conversion::findConflictPairsForGrid(int threadId, std::unordered_set<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints) {
     // TODO: find node pairs and update marginal points
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
