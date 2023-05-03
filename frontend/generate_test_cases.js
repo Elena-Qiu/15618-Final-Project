@@ -7,8 +7,8 @@ Pure gold: https://p5js.org/reference
 
 SHAPE_CATEGORY_NUM = 4; // arc, ellipse, quad, triangle
 
-SHAPE_NUM = 700;
-MAX_SCALE = 400;
+SHAPE_NUM = 2000;
+MAX_SCALE = 800;
 const SHAPES = {
     ARC: 0,
     ELLIPSE: 1,
@@ -22,8 +22,8 @@ const PORT = "8080";
 const VALID_URI = "getMapSolution";
 
 /* Some general variables. */
-let h = 1000; // height of the canvas
-let w = 1000; // width of the canvas
+let h = 4000; // height of the canvas
+let w = 4000; // width of the canvas
 MIN_SCALE = Math.min(h, w) / 10;
 let LINE_EXPANSION = 0;
 let MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
