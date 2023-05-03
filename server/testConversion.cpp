@@ -31,9 +31,13 @@ int main(int argc, char *argv[]) {
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-    converter.findNodes(bfs);
+    converter.findNodesSeq(bfs);
     auto end = std::chrono::high_resolution_clock::now();
     auto nodes_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    // output results of findNodes so that we can just test findNodes for parallel version
+    std::string fileName = std::string("nodesMap-") + (seq ? std::string("seq") : std::string("par")) + std::string(".txt");
+    converter.saveNodesMapToFile(fileName);
 
     start = std::chrono::high_resolution_clock::now();
     converter.findEdgesSeq();
