@@ -102,6 +102,25 @@ void Conversion::saveNodesMapToFile(std::string &fileName) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
+void Conversion::saveNodesMapToFilePar(std::string &fileName) {
+    std::ofstream outFile(fileName);
+    if (!outFile) {
+        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
+        return;
+    }
+    outFile << w << std::endl;
+    outFile << h << std::endl;
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            outFile << getPixelPar(x, y) << " ";
+        }
+        outFile << std::endl;
+    }
+    outFile.close();
+    if (!outFile)
+        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
+}
+
 void Conversion::findNodesSeq(bool bfs) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
@@ -150,10 +169,10 @@ void Conversion::findNodesPar(bool bfs) {
         findNodesForGrid(bfs, threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
         
         // step 3: find node idx pairs that belong to the same global node in parallel
-        findNodePairsForGrid(threadId, nodePairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
+        findNodePairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
     }
 
-    // step 4: build a global UnionFind using nodePairsPerGrid, and finalize node ids
+    // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
     // TODO
     
     // step 5: let each grid updates its node ids in parallel using omp
@@ -161,7 +180,6 @@ void Conversion::findNodesPar(bool bfs) {
     #pragma omp parallel for schedule(dynamic) shared(nodeIdMapping)
     {
         int threadId = omp_get_thread_num();
-        // TODO
         updateNodeIpForGrid(threadId);
     }
 
@@ -179,7 +197,6 @@ void Conversion::updateNodeIpForGrid(int threadId) {
         for (int localX = 0; localX < localW; ++localW) {
             int encodedNodeId = encodeNodeId(gridIdxX, gridIdxY, getPixelPar(gridIdxX, gridIdxY, localX, localY));
             int newNodeId = nodeIdMapping.at(encodedNodeId);
-            // setPixel(getGlobalX(gridIdxX, localX), getGlobalY(gridIdxY, localY), newNodeId);
             setPixelPar(gridIdxX, gridIdxY, localX, localY, newNodeId);
         }
     }

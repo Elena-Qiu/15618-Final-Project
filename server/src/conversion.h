@@ -61,7 +61,7 @@ public:
     // for parallel
     void findNodesPar(bool bfs=true);
     void findEdgesPar();
-
+    void saveNodesMapToFilePar(std::string &fileName);
 
 private:
     int w;
