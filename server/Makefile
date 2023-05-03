@@ -7,7 +7,7 @@ CFLAGS += -O2 -fopenmp
 DEPEND = src/csapp.h src/util.h src/conversion.h src/fourColor.h
 PROGRAM = server.cpp src/csapp.c src/util.cpp src/fourColor.cpp src/conversion.cpp
 
-SOURCES_FOURCOLOR := src/fourColor.cpp main.cpp
+SOURCES_FOURCOLOR := src/fourColor.cpp testFourColor.cpp
 HEADERS_FOURCOLOR := src/fourColor.h
 
 SOURCES_CONVERSION := src/conversion.cpp testConversion.cpp
