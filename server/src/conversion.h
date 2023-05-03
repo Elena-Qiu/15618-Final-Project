@@ -93,7 +93,7 @@ private:
     std::vector<std::vector<int>> pixelToNodePar;
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
 
-    void splitNodesMap(int gridDim);
+    void splitNodesMap();
     int getPixelPar(int gridIdxX, int gridIdxY, int localX, int localY);
     int getPixelPar(int globalX, int globalY);
     void setPixelPar(int gridIdxX, int gridIdxY, int localX, int localY, int id);
@@ -109,7 +109,7 @@ private:
     int getLocalY(int localY);
 
     std::vector<Point> fillAreaPar(int x, int y, int id, bool bfs);
-    void findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
+    void findNodePairsForGrid(int threadId, std::unordered_set<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
     void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
 };
 
