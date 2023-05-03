@@ -6,13 +6,13 @@ Pure gold: https://p5js.org/reference
 */
 
 // server's connection option
-const IP = "http://ghc67.ghc.andrew.cmu.edu";
+const IP = "http://ghc63.ghc.andrew.cmu.edu";
 const PORT = "8080";
 const VALID_URI = "getMapSolution";
 
 /* Some general variables. */
-const h = 1000; // height of the canvas
-const w = 1000; // width of the canvas
+const h = 200; // height of the canvas
+const w = 200; // width of the canvas
 const LINE_EXPANSION = 1;
 const MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
 const EDGE_THRESHOLD = 3;

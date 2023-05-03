@@ -4,8 +4,8 @@
 #include <iostream>
 #include <string.h>
 
-#include "fourColor.h"
-#include "testGenerater.h"
+#include "src/fourColor.h"
+#include "src/testGenerater.h"
 
 using namespace std;
 
@@ -58,9 +58,9 @@ int main(int argc, char *argv[]) {
     string inputFilePath(argv[1]);
     string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 4) + "_output.txt";
     char *seqOrNot = argv[2];
-    bool par = false;
+    bool seq = false;
     if (strcmp(seqOrNot, "true") == 0)
-        par = true;
+        seq = true;
     else if (strcmp(seqOrNot, "false") != 0) {
         cout << "ERROR: 2nd argument should be either \"true\" or \"false\"!" << endl;
         exit(-1);
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 
     // solve graph
     int solveTimeOut = 60;
-    fourColorSolver solver(solveTimeOut, seqOrNot);
+    fourColorSolver solver(solveTimeOut, seq);
 
     auto fileLoadResult = return_status_array[solver.loadFromFile(inputFilePath)];
     cout << "Load File: " << fileLoadResult << "\n";

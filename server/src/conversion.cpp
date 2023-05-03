@@ -81,6 +81,25 @@ void Conversion::saveToFile(std::string &fileName) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
+void Conversion::saveNodesMapToFile(std::string &fileName) {
+    std::ofstream outFile(fileName);
+    if (!outFile) {
+        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
+        return;
+    }
+    outFile << w << std::endl;
+    outFile << h << std::endl;
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            outFile << getPixel(x, y) << " ";
+        }
+        outFile << std::endl;
+    }
+    outFile.close();
+    if (!outFile)
+        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
+}
+
 void Conversion::findNodes(bool bfs) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {

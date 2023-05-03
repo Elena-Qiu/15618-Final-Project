@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <iostream>
-//#include "fourColor.h"
+#include <chrono>
 
 #ifndef INC_15618_FINAL_PROJECT_CONVERSION_H
 #define INC_15618_FINAL_PROJECT_CONVERSION_H
@@ -58,6 +58,7 @@ public:
 
     // debug
     void printPixelToNodes();
+    void saveNodesMapToFile(std::string &fileName);
 
     // TODO: fix this
     void findNodes(bool bfs=true);
