@@ -78,7 +78,7 @@ private:
     int getPixel(int x, int y);
     void setPixel(int x, int y, int id);
 
-    std::vector<Point> fillAreaSeq(int x, int y, int id, bool bfs);
+    void fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
 
     // for parallel findNodes
     const int GRID_DIM = 8;
@@ -100,7 +100,7 @@ private:
     int getLocalX(int localX);
     int getLocalY(int localY);
 
-    std::vector<Point> fillAreaPar(int x, int y, int id, bool bfs);
+    void fillAreaPar(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
     void findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
     void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints);
 };

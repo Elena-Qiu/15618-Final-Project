@@ -104,7 +104,8 @@ void Conversion::findNodesSeq(bool bfs) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             if (getPixel(x, y) == -1) {
-                auto localMarginalPoints = fillArea(x, y, nodeNum, bfs);
+                std::vector<Point> localMarginalPoints;
+                fillAreaSeq(x, y, nodeNum, localMarginalPoints, bfs);
                 if (!localMarginalPoints.empty()) {
                     nodeNum++;
                     marginalPoints.push_back(localMarginalPoints);
@@ -240,7 +241,8 @@ void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vecto
     for (int y = 0; y < localH; y++) {
         for (int x = 0; x < localW; x++) {
             if (getPixelPar(gridIdxX, gridIdxY, x, y) == -1) {
-                auto localMarginalPoints = fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, nodeNum, bfs);
+                std::vector<Point> localMarginalPoints;
+                fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, nodeNum, localMarginalPoints, bfs);
                 if (!localMarginalPoints.empty()) {
                     localNodeNum++;
                     gridMarginalPoints.push_back(localMarginalPoints);
@@ -250,10 +252,9 @@ void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vecto
     }
 }
 
-std::vector<Point> Conversion::fillAreaSeq(int x, int y, int id, bool bfs) {
+void Conversion::fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs) {
     int n = 0;
     std::vector<std::vector<bool>> visited(w, std::vector<bool>(h, false));
-    std::vector<Point> localMarginalPoints;
     std::deque<Point> qu;
     if (bfs) {
         qu.emplace_back(Point{x, y});
@@ -301,13 +302,15 @@ std::vector<Point> Conversion::fillAreaSeq(int x, int y, int id, bool bfs) {
         setPixel(x, y, -2);
         localMarginalPoints.clear();
     }
-    return localMarginalPoints;
 }
 
-std::vector<Point> Conversion::fillAreaPar(int gridIdxX, int gridIdxY, int localW, int localH, int x, int y, int id, bool bfs) {
+void Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
+                                           int localW, int localH,
+                                           int x, int y, int id,
+                                           std::vector<Point> &localMarginalPoints,
+                                           bool bfs) {
     int n = 0;
     std::vector<std::vector<bool>> visited(w, std::vector<bool>(h, false));
-    std::vector<Point> localMarginalPoints;
     std::deque<Point> qu;
     if (bfs) {
         qu.emplace_back(Point{x, y});
@@ -358,7 +361,6 @@ std::vector<Point> Conversion::fillAreaPar(int gridIdxX, int gridIdxY, int local
         setPixel(x, y, -2);
         localMarginalPoints.clear();
     }
-    return localMarginalPoints;
 }
 
 int Conversion::getPixelPar(int gridIdxX, int gridIdxY, int x, int y) {
@@ -523,7 +525,6 @@ void Conversion::findEdgesSeq() {
 
 void Conversion::findEdgesPar() {
     std::vector<std::unordered_set<int>> adjacentLists(nodeNum);
-
 #pragma omp parallel for schedule(dynamic, 10) shared(adjacentLists)
     // compare and check if nodes have an edge
     for (int i = 0; i < nodeNum; i++) {
