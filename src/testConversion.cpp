@@ -28,11 +28,17 @@ int main(int argc, char *argv[]) {
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-    converter.convertMapToGraph();
+    converter.findNodes();
     auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    auto nodes_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    cout << "Time Cost: " << duration << " ms\n";
+    start = std::chrono::high_resolution_clock::now();
+    converter.findEdges();
+    end = std::chrono::high_resolution_clock::now();
+    auto edges_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    cout << "Find Nodes: " << nodes_duration << " ms\n";
+    cout << "Find Edges: " << edges_duration << " ms\n";
 
     converter.saveToFile(outputFilePath);
     return 0;
