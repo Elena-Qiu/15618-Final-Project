@@ -242,6 +242,7 @@ void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vecto
             if (getPixelPar(gridIdxX, gridIdxY, x, y) == -1) {
                 auto localMarginalPoints = fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, nodeNum, bfs);
                 if (!localMarginalPoints.empty()) {
+                    gridEncodedNodeIds.push_back(encodeNodeId(gridIdxX, gridIdxY, localNodeNum));
                     localNodeNum++;
                     gridMarginalPoints.push_back(localMarginalPoints);
                 }

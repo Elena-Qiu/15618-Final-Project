@@ -106,7 +106,7 @@ private:
 
     std::vector<Point> fillAreaPar(int x, int y, int id, bool bfs);
     void findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
-    void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints);
+    void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
 };
 
 
