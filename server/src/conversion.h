@@ -78,7 +78,7 @@ private:
     int getPixel(int x, int y);
     void setPixel(int x, int y, int id);
 
-    std::vector<Point> fillAreaSeq(int x, int y, int id, bool bfs);
+    void fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
 
     // for parallel findNodes
     const int GRID_DIM = 8;
@@ -100,10 +100,9 @@ private:
     int getLocalX(int localX);
     int getLocalY(int localY);
 
-    std::vector<Point> fillAreaPar(int gridIdxX, int gridIdxY, int localW, int localH, int x, int y, int id, bool bfs);
-    std::vector<std::vector<int>> encodedNodeIdPerGrid(GRID_DIM * GRID_DIM);
-    void findNodePairsForGrid(int threadId, std::unordered_set<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
-    void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
+    void fillAreaPar(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
+    void findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
+    void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints);
 };
 
 
