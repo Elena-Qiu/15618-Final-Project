@@ -4,8 +4,8 @@ CFLAGS = -g -Og -Wall -std=c++14 -I.
 CFLAGS += -MMD -D_FORTIFY_SOURCE=2 -D_XOPEN_SOURCE=700
 CFLAGS += -O2 -fopenmp
 
-DEPEND = src/csapp.h src/util.h src/conversion.h src/fourColor.h
-PROGRAM = server.cpp src/csapp.c src/util.cpp src/fourColor.cpp src/conversion.cpp
+DEPEND = src/csapp.h src/pipeline.h src/conversion.h src/fourColor.h
+PROGRAM = server.cpp src/csapp.c src/pipeline.cpp src/fourColor.cpp src/conversion.cpp
 
 SOURCES_FOURCOLOR := src/fourColor.cpp testFourColor.cpp
 HEADERS_FOURCOLOR := src/fourColor.h
