@@ -13,7 +13,7 @@ const VALID_URI = "getMapSolution";
 /* Some general variables. */
 const h = 200; // height of the canvas
 const w = 200; // width of the canvas
-const LINE_EXPANSION = 1;
+const LINE_EXPANSION = 0;
 const MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
 const EDGE_THRESHOLD = 3;
 

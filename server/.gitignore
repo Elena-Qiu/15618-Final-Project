@@ -1,2 +1,4 @@
 server
 *.d
+_output.txt
+conversion.dSYM/
