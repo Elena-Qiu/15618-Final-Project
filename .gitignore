@@ -4,3 +4,7 @@ CMakeLists.txt
 .idea
 *.output.txt
 .vscode
+adj.txt
+colors.txt
+nodesMap.txt
+server/CMakeLists.txt
