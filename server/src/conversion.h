@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <chrono>
+#include <unordered_map>
 
 #ifndef INC_15618_FINAL_PROJECT_CONVERSION_H
 #define INC_15618_FINAL_PROJECT_CONVERSION_H
@@ -24,10 +25,11 @@ class Conversion {
 public:
 
     // constructor
-    explicit Conversion(int timeOut = 10) {
+    explicit Conversion(bool _seq = true) {
         w = 0;
         h = 0;
         nodeNum = 0;
+        seq = _seq;
     }
 
     // file input and output
@@ -62,12 +64,14 @@ public:
 
     // TODO: fix this
     void findNodes(bool bfs=true);
-    void findEdges();
+    void findEdgesSeq();
+    void findEdgesPar();
 
 private:
     int w;
     int h;
     int nodeNum;
+    bool seq;
     std::vector<int> pixelToNode;
     std::vector<std::vector<Point>> marginalPoints;
     std::vector<std::pair<int,int>> edges;
