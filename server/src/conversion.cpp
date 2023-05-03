@@ -525,7 +525,7 @@ void Conversion::findEdgesSeq() {
 
 void Conversion::findEdgesPar() {
     std::vector<std::unordered_set<int>> adjacentLists(nodeNum);
-#pragma omp parallel for schedule(dynamic, 10) shared(adjacentLists)
+#pragma omp parallel for default(none) schedule(dynamic, 10) shared(adjacentLists, marginalPoints)
     // compare and check if nodes have an edge
     for (int i = 0; i < nodeNum; i++) {
         std::unordered_set<int> visited_neighbors; // neighbors that have been visited
@@ -556,7 +556,7 @@ void Conversion::findEdgesPar() {
                     int tmpId = getPixel(tmpx, tmpy);
                     if (tmpId >= 0 && tmpId != i) {
                         // if already added as an edge, skip
-                        int exist = 0;
+                        size_t exist;
 #pragma omp critical
                         {
                             exist = adjacentLists[i].count(tmpId);
@@ -619,3 +619,5 @@ void Conversion::addMapColors(const std::vector<int>& colors) {
         }
     }
 }
+
+

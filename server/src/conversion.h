@@ -84,6 +84,10 @@ private:
     const int GRID_DIM = 8;
     std::vector<std::vector<int>> pixelToNodePar;
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
+    // TODO: remember to resize it somewhere
+    std::vector<std::vector<int>> encodedNodeIdPerGrid; // collection of encoded node id in all grids
+    std::vector<std::unordered_set<std::pair<int, int>>> conflictPairsPerGrid; // collection of neighboring encoded node id
+
 
     void splitNodesMap(int gridDim);
     int getPixelPar(int gridIdxX, int gridIdxY, int localX, int localY);
