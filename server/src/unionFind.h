@@ -2,6 +2,7 @@
 // Created by Qiu Yuqing on 2023/5/3.
 //
 #include <unordered_map>
+#include <vector>
 
 #ifndef SERVER_UNIONFIND_H
 #define SERVER_UNIONFIND_H
