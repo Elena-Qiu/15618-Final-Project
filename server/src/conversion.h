@@ -18,7 +18,7 @@ const int EDGE_THRESHOLD = 3;
 typedef struct Point {
     int x;
     int y;
-}point_t;
+} point_t;
 
 class Conversion {
 public:
@@ -61,8 +61,12 @@ public:
     void saveNodesMapToFile(std::string &fileName);
 
     // TODO: fix this
-    void findNodes(bool bfs=true);
-    void findEdges();
+    void findNodesSeq(bool bfs=true);
+    void findEdgesSeq();
+
+    // for parallel
+    void findNodesPar(bool bfs=true);
+    void findEdgesPar();
 
 private:
     int w;
@@ -76,10 +80,28 @@ private:
     void setPixel(int x, int y, int id);
 
 
-    std::vector<Point> fillArea(int x, int y, int id, bool bfs);
+    std::vector<Point> fillAreaSeq(int x, int y, int id, bool bfs);
 
     enum return_status {SUCCESS, TIMEOUT, FAILURE, WRONG};
     std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
+    
+    // for parallel
+    const int GRID_DIM = 8;
+    std::vector<std::vector<int>> pixelToNodePar;
+
+    void splitNodesMap(int gridDim);
+    int getPixelPar(int gridIdxX, int gridIdxY, int x, int y);
+    void setPixelPar(int gridIdxX, int gridIdxY, int x, int y, int id);
+    int getGridWidth(int gridIdxX);
+    int getGridHeight(int gridIdxY);
+    int encodeNodeId(int gridIdxX, int gridIdxY, int nodeId);
+    int getGlobalX(int gridIdxX, int localX);  // x idx in 2d array
+    int getGlobalY(int gridIdxY, int localY);  // y idx in 2d array
+
+    std::vector<Point> fillAreaPar(int x, int y, int id, bool bfs);
+    void findNodesPar(bool bfs);
+    void findNodePairsForGrid(int threadId, std::vector<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
+    void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints);
 };
 
 
