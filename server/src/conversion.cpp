@@ -598,10 +598,11 @@ void Conversion::findEdgesPar() {
 }
 
 void Conversion::convertMapToGraph() {
-    findNodes();
     if (seq) {
+        findNodesSeq();
         findEdgesSeq();
     } else {
+        findEdgesPar();
         findEdgesPar();
     }
 }

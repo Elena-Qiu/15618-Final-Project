@@ -42,17 +42,9 @@ public:
         h = _h;
         pixelToNode = arr;
     }
-    std::vector<int>& getPixelToNodeArray() {
-        return pixelToNode;
-    }
-
-    int getNodeNum() const {
-        return nodeNum;
-    }
-
-    std::vector<std::pair<int,int>> getEdges() {
-        return edges;
-    }
+    std::vector<int>& getPixelToNodeArray() {return pixelToNode;}
+    int getNodeNum() const {return nodeNum;}
+    std::vector<std::pair<int,int>> getEdges() {return edges;}
 
     // functions
     void convertMapToGraph();
@@ -80,15 +72,15 @@ private:
     std::vector<std::vector<Point>> marginalPoints;
     std::vector<std::pair<int,int>> edges;
 
+    enum return_status {SUCCESS, TIMEOUT, FAILURE, WRONG};
+    std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
+
     int getPixel(int x, int y);
     void setPixel(int x, int y, int id);
 
     std::vector<Point> fillAreaSeq(int x, int y, int id, bool bfs);
 
-    enum return_status {SUCCESS, TIMEOUT, FAILURE, WRONG};
-    std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
-    
-    // for parallel
+    // for parallel findNodes
     const int GRID_DIM = 8;
     std::vector<std::vector<int>> pixelToNodePar;
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
