@@ -8,9 +8,10 @@
 #include <sstream>
 #include <math.h>
 #include <algorithm>
-#include "conversion.h"
-
 #include <omp.h>
+
+#include "conversion.h"
+#include "unionFind.h"
 
 int Conversion::getPixel(int x, int y) {
     return pixelToNode[y * w + x];
@@ -173,7 +174,7 @@ void Conversion::findNodesPar(bool bfs) {
     }
 
     // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
-    // TODO
+    calGlobalIdx();
     
     // step 5: let each grid updates its node ids in parallel using omp
     // may also convert 4d array back to 2d array in this step
