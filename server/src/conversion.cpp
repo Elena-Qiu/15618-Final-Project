@@ -184,7 +184,28 @@ void Conversion::findNodesPar(bool bfs) {
     }
 
     // step 6: update the global marginal points
-    
+    updateGlobalMarginalPoints(marginalPointsPerGrid);
+}
+
+void Conversion::updateGlobalMarginalPoints(std::vector<std::vector<std::vector<Point>>> &marginalPointsPerGrid) {
+    for (int gridIdxY = 0; gridIdxY < GRID_DIM; ++gridIdxY) {
+        for (int gridIdxX = 0; gridIdxX < GRID_DIM; ++gridIdxX) {
+            // each grid
+            int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
+            auto &gridMarginalPoints = marginalPointsPerGrid[gridGlobalId];
+            for (auto &localMarginalPoints : gridMarginalPoints) {
+                // each margin
+                Point &sampleLocation = localMarginalPoints.at(0);
+                int nodeId = getPixelPar(gridIdxX, gridIdxY, sampleLocation.x, sampleLocation.y);
+                int encodedNodeId = encodeNodeId(gridIdxX, gridIdxY, nodeId);
+                int globalNodeId = nodeIdMapping.at(encodedNodeId);
+                for (auto &marginalPoint : localMarginalPoints) {
+                    // each point
+                    marginalPoints.at(globalNodeId).push_back(marginalPoint);
+                }
+            }
+        }
+    }
 }
 
 void Conversion::updateNodeIpForGrid(int threadId) {
