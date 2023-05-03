@@ -6,6 +6,7 @@
 #include <iostream>
 #include <chrono>
 #include <unordered_map>
+#include "src/unionFind.h"
 
 #ifndef INC_15618_FINAL_PROJECT_CONVERSION_H
 #define INC_15618_FINAL_PROJECT_CONVERSION_H
@@ -88,6 +89,7 @@ private:
     std::vector<std::vector<int>> encodedNodeIdPerGrid; // collection of encoded node id in all grids
     std::vector<std::unordered_set<std::pair<int, int>>> conflictPairsPerGrid; // collection of neighboring encoded node id
 
+    void calGlobalIdx();
 
     void splitNodesMap();
     int getPixelPar(int gridIdxX, int gridIdxY, int localX, int localY);

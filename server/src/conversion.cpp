@@ -677,4 +677,15 @@ void Conversion::addMapColors(const std::vector<int>& colors) {
     }
 }
 
+void Conversion::calGlobalIdx() {
+    unionFind uf(encodedNodeIdPerGrid);
+    for (auto &v : conflictPairsPerGrid) {
+        for (auto &p : v) {
+            uf.unionPair(p.first, p.second);
+        }
+    }
+    uf.compressMapping();
+    nodeIdMapping = uf.getMapping();
+}
+
 
