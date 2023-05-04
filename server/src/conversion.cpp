@@ -224,21 +224,30 @@ void Conversion::findNodesPar() {
         // step 2: use openmp to let different nodes process individual grids
         findNodesForGrid(threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
         
-        // step 3: find node idx pairs that belong to the same global node in parallel
-        findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
     }
+
+    // step 3: find node idx pairs that belong to the same global node in parallel
+    for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId)
+        findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
+
 
     // for debug
     std::string fileNamePar2("nodesMap-par-step2.txt");
     saveNodesMapToFile(fileNamePar2);
     std::cout << "step 2 saved nodes map to file!" << std::endl;
 
+    // for debug
     std::string fileNamePar3("nodesMap-par-step3.txt");
     saveEncodedAndConflictToFile(fileNamePar3);
     std::cout << "step 3 saved nodes map to file!" << std::endl;
 
     // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
     calGlobalIdx();
+    std::cout << "step 4 completed!" << std::endl;
+
+    for (auto p : nodeIdMapping) {
+        std::cout << "(" << (p.first >> 16) << ", " << (p.first & 0xFFFF) << ") --> " << p.second << std::endl;
+    }
     
     // step 5: let each grid updates its node ids in parallel using omp
     // may also convert 4d array back to 2d array in this step
@@ -246,6 +255,11 @@ void Conversion::findNodesPar() {
     for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
         updateNodeIpForGrid(threadId);
     }
+
+    // for debug
+    std::string fileNamePar5("nodesMap-par-step5.txt");
+    saveNodesMapToFile(fileNamePar5);
+    std::cout << "step 5 saved nodes map to file!" << std::endl;
 
     // step 6: update the global marginal points
     updateGlobalMarginalPoints(marginalPointsPerGrid);
@@ -299,13 +313,22 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
         int localY = localH - 1;
         for (int localX = 0; localX < localW; ++localX) {
             int localNodeId = getPixelPar(gridIdxX, gridIdxY, localX, localY);
+            int lowerNodeId = getPixelPar(gridIdxX, gridIdxY + 1, localX, 0);
+
+            // for debug
+            // printf("thread[%d] lower boundary of grid (%d, %d) with localX=%d, curNodeId=%d, lowerNodeId=%d\n", 
+            //         omp_get_thread_num(), gridIdxX, gridIdxY, localX, localNodeId, lowerNodeId);
+
             if (localNodeId == -2)  // is a node boundary, skip
                 continue;
 
-            int lowerNodeId = getPixelPar(gridIdxX, gridIdxY + 1, localX, 0);
             if (lowerNodeId == -2)  // a new marginal point
                 gridMarginalPoints[localNodeId].push_back(Point{localX, localY});
             else if (lowerNodeId >= 0) {  // a conflict pair found
+
+                // for debug
+                // printf("conflict pair inserted between %d and %d\n", localNodeId, lowerNodeId);
+
                 gridNodePairs.insert({
                     encodeNodeId(gridIdxX, gridIdxY, localNodeId),
                     encodeNodeId(gridIdxX, gridIdxY + 1, lowerNodeId)
@@ -318,13 +341,22 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
         int localX = localW - 1;
         for (int localY = 0; localY < localH; ++localY) {
             int localNodeId = getPixelPar(gridIdxX, gridIdxY, localX, localY);
+            int rightNodeId = getPixelPar(gridIdxX + 1, gridIdxY, 0, localY);
+
+            // for debug
+            // printf("thread[%d] right boundary of grid (%d, %d) with localY=%d, curNodeId=%d, rightNodeId=%d\n", 
+            //         omp_get_thread_num(), gridIdxX, gridIdxY, localY, localNodeId, rightNodeId);
+
             if (localNodeId == -2)  // is a node boundary, skip
                 continue;
 
-            int rightNodeId = getPixelPar(gridIdxX + 1, gridIdxY, 0, localY);
             if (rightNodeId == -2)  // a new marginal point
                 gridMarginalPoints[localNodeId].push_back(Point{localX, localY});
             else if (rightNodeId >= 0) {  // a node pair found
+
+                // for debug
+                // printf("conflict pair inserted between %d and %d\n", localNodeId, rightNodeId);
+
                 gridNodePairs.insert({
                     encodeNodeId(gridIdxX, gridIdxY, localNodeId),
                     encodeNodeId(gridIdxX + 1, gridIdxY, rightNodeId)
