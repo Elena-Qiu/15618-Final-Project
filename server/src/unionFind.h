@@ -13,8 +13,7 @@ public:
     explicit unionFind(const std::vector<std::vector<int>>& encodedId);
 
     void unionPair(int x, int y);
-    void compressMapping();
-    std::unordered_map<int,int>& getMapping() { return mapping;};
+    std::unordered_map<int,int> getCompressedMapping();
 
 private:
     std::unordered_map<int,int> mapping;
