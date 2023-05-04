@@ -279,9 +279,7 @@ void Conversion::updateGlobalMarginalPoints(std::vector<std::vector<std::vector<
             for (auto &localMarginalPoints : gridMarginalPoints) {
                 // each margin
                 Point &sampleLocation = localMarginalPoints.at(0);
-                int nodeId = getPixelPar(gridIdxX, gridIdxY, sampleLocation.x, sampleLocation.y);
-                int encodedNodeId = encodeNodeId(gridIdxX, gridIdxY, nodeId);
-                int globalNodeId = nodeIdMapping.at(encodedNodeId);
+                int globalNodeId = getPixelPar(gridIdxX, gridIdxY, sampleLocation.x, sampleLocation.y);
                 for (auto &marginalPoint : localMarginalPoints) {
                     // each point
                     marginalPoints.at(globalNodeId).push_back(marginalPoint);
@@ -789,6 +787,8 @@ void Conversion::calGlobalIdx() {
         }
     }
     nodeIdMapping = std::move(uf.getCompressedMapping());
+    nodeNum = uf.getCompressedIdNum();
+    marginalPoints.resize(nodeNum);
 }
 
 

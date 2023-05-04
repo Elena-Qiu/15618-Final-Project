@@ -14,10 +14,12 @@ public:
 
     void unionPair(int x, int y);
     std::unordered_map<int,int> getCompressedMapping();
+    int getCompressedIdNum() {return compressedIdNum;}
 
 private:
     std::unordered_map<int,int> mapping;
     std::unordered_map<int,int> ranks;
+    int compressedIdNum;
 
     int find(int x);
 };
