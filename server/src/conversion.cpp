@@ -66,16 +66,21 @@ int Conversion::loadFromFile(std::string &fileName) {
     h = (int)atoi(str.c_str());
 
     // read nodes map
+    pixelToNode.resize(w * h);
+    int count = 0, globalX, globalY;
     while (std::getline(inFile, line)) {
         // skip empty line
         if (line.empty()) {
             continue;
         }
+        globalX = count % w;
+        globalY = count / w;
+        count ++;
 
         std::stringstream sstream(line);
         std::string str;
         std::getline(sstream, str, '\n');
-        pixelToNode.push_back((int)atoi(str.c_str()));
+        setPixelSeq(globalX, globalY, (int)atoi(str.c_str()));
     }
     inFile.close();
     return SUCCESS;

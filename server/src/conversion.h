@@ -92,7 +92,7 @@ private:
     void findEdgesPar();
 
     // for parallel findNodes
-    const int GRID_DIM = 20;
+    const int GRID_DIM = 4;
     // std::vector<std::vector<int>> pixelToNodePar;
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
     int getPixelSeq(int x, int y);
