@@ -66,16 +66,31 @@ int Conversion::loadFromFile(std::string &fileName) {
     h = (int)atoi(str.c_str());
 
     // read nodes map
+    if (seq) {
+        pixelToNode.resize(w * h);
+    } else {
+        pixelToNodePar.resize(GRID_DIM * GRID_DIM);
+        for (int i = 0; i < GRID_DIM * GRID_DIM; ++i) {
+            int gridIdxX = i % GRID_DIM;
+            int gridIdxY = i / GRID_DIM;
+            pixelToNodePar[i].resize(getGridWidth(gridIdxX) * getGridHeight(gridIdxY));
+        }
+    }
+    int count = 0, globalX, globalY, nodeId;
     while (std::getline(inFile, line)) {
         // skip empty line
         if (line.empty()) {
             continue;
         }
+        globalX = count % w;
+        globalY = count / w;
+        count ++;
 
         std::stringstream sstream(line);
         std::string str;
         std::getline(sstream, str, '\n');
-        pixelToNode.push_back((int)atoi(str.c_str()));
+        nodeId = (int)atoi(str.c_str());
+        setPixel(globalX, globalY, nodeId);
     }
     inFile.close();
     return SUCCESS;
@@ -186,24 +201,24 @@ void Conversion::findNodesSeq() {
 }
 
 void Conversion::splitNodesMap() {
-    for (int gridIdxY = 0; gridIdxY < GRID_DIM; ++gridIdxY) {
-        for (int gridIdxX = 0; gridIdxX < GRID_DIM; ++gridIdxX) {
-            int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
-            pixelToNodePar.push_back(std::vector<int>());
-            int localW = getGridWidth(gridIdxX);
-            int localH = getGridHeight(gridIdxY);
-            for (int localY = 0; localY < localH; ++localY) {
-                for (int localX = 0; localX < localW; ++localX) {
-                    int pixelGlobalIdxX = getGlobalX(gridIdxX, localX);
-                    int pixelGlobalIdxY = getGlobalY(gridIdxY, localY);
-                    int nodeId = getPixelSeq(pixelGlobalIdxX, pixelGlobalIdxY);
-                    // printf("in grid (%d, %d), local pixel (%d, %d) has global idx (%d, %d) and nodeId %d\n",
-                    //         gridIdxX, gridIdxY, localX, localY, pixelGlobalIdxX, pixelGlobalIdxY, nodeId);
-                    pixelToNodePar[gridGlobalId].push_back(nodeId);
-                }
-            }
-        }
-    }
+    // for (int gridIdxY = 0; gridIdxY < GRID_DIM; ++gridIdxY) {
+    //     for (int gridIdxX = 0; gridIdxX < GRID_DIM; ++gridIdxX) {
+    //         int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
+    //         pixelToNodePar.push_back(std::vector<int>());
+    //         int localW = getGridWidth(gridIdxX);
+    //         int localH = getGridHeight(gridIdxY);
+    //         for (int localY = 0; localY < localH; ++localY) {
+    //             for (int localX = 0; localX < localW; ++localX) {
+    //                 int pixelGlobalIdxX = getGlobalX(gridIdxX, localX);
+    //                 int pixelGlobalIdxY = getGlobalY(gridIdxY, localY);
+    //                 int nodeId = getPixelSeq(pixelGlobalIdxX, pixelGlobalIdxY);
+    //                 // printf("in grid (%d, %d), local pixel (%d, %d) has global idx (%d, %d) and nodeId %d\n",
+    //                 //         gridIdxX, gridIdxY, localX, localY, pixelGlobalIdxX, pixelGlobalIdxY, nodeId);
+    //                 pixelToNodePar[gridGlobalId].push_back(nodeId);
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 void Conversion::findNodesPar() {
