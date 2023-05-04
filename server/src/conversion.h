@@ -65,8 +65,8 @@ public:
     // debug
     void printPixelToNodes();
     void saveNodesMapToFile(std::string &fileName);
-    void saveNodesMapToFilePar(std::string &fileName);
-
+    void saveEncodedAndConflictToFile(std::string &fileName);
+    
 private:
     int w;
     int h;

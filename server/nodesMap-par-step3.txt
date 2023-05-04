@@ -1,0 +1,9 @@
+grid:0; localId:0 
+grid:1; localId:0 grid:1; localId:1 
+grid:2; localId:0 grid:2; localId:1 
+grid:3; localId:0 grid:3; localId:1 
+****************************************
+0; localId:0 1; localId:0
+1; localId:0 3; localId:1
+1; localId:1 3; localId:0
+2; localId:0 3; localId:1

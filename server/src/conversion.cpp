@@ -104,34 +104,66 @@ void Conversion::saveNodesMapToFile(std::string &fileName) {
     }
     outFile << w << std::endl;
     outFile << h << std::endl;
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            outFile << getPixel(x, y) << "\t";
+
+    if (seq) {
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                outFile << getPixel(x, y) << "\t";
+            }
+            outFile << std::endl;
         }
-        outFile << std::endl;
+    } else {
+        int gridIdxX = 0;
+        int newGridIdxX = 0;
+        int gridIdxY = 0;
+        int newGridIdxY = 0;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                newGridIdxX = getGridIdxX(x);
+                if (x != 0 && newGridIdxX != gridIdxX) {
+                    outFile << "|\t";
+                }
+                outFile << getPixel(x, y) << "\t";
+                gridIdxX = newGridIdxX;
+            }
+            newGridIdxY = getGridIdxY(y + 1);
+            if (newGridIdxY != gridIdxY) {
+                outFile << "\n";
+                for (int x = 0; x < w; x++) {
+                    outFile << "-\t";
+                }
+            }
+            gridIdxY = newGridIdxY;
+            outFile << std::endl;
+        }
     }
     outFile.close();
     if (!outFile)
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
-void Conversion::saveNodesMapToFilePar(std::string &fileName) {
+void Conversion::saveEncodedAndConflictToFile(std::string &fileName) {
     std::ofstream outFile(fileName);
     if (!outFile) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
         return;
     }
-    outFile << w << std::endl;
-    outFile << h << std::endl;
-    for (int y = 0; y < h; y++) {
-        for (int x = 0; x < w; x++) {
-            outFile << getPixel(x, y) << "\t";
+    for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
+        auto curGridEncodedId = encodedNodeIdPerGrid[threadId];
+        for (auto id : curGridEncodedId) {
+            outFile << "grid:" << (id >> 16) << "; localId:" << (id & 0xFFFF) << " ";
         }
         outFile << std::endl;
     }
-    outFile.close();
-    if (!outFile)
-        std::cout << "error writing file \"" << fileName << "\"" << std::endl;
+    outFile << "****************************************\n";
+    for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
+        auto curConflict = conflictPairsPerGrid[threadId];
+        for (auto p : curConflict) {
+            outFile << (p.first >> 16) << "; localId:" << (p.first & 0xFFFF)
+                    << " " 
+                    << (p.second >> 16) << "; localId:" << (p.second & 0xFFFF) << "\n";
+        }
+    }
 }
 
 void Conversion::findNodesSeq() {
@@ -180,7 +212,7 @@ void Conversion::findNodesPar() {
 
     // for debug
     std::string fileNamePar1("nodesMap-par-step1.txt");
-    saveNodesMapToFilePar(fileNamePar1);
+    saveNodesMapToFile(fileNamePar1);
     std::cout << "step 1 saved nodes map to file!" << std::endl;
 
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
@@ -192,14 +224,18 @@ void Conversion::findNodesPar() {
         // step 2: use openmp to let different nodes process individual grids
         findNodesForGrid(threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
         
-        // // step 3: find node idx pairs that belong to the same global node in parallel
-        // findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
+        // step 3: find node idx pairs that belong to the same global node in parallel
+        findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
     }
 
     // for debug
     std::string fileNamePar2("nodesMap-par-step2.txt");
-    saveNodesMapToFilePar(fileNamePar2);
+    saveNodesMapToFile(fileNamePar2);
     std::cout << "step 2 saved nodes map to file!" << std::endl;
+
+    std::string fileNamePar3("nodesMap-par-step3.txt");
+    saveEncodedAndConflictToFile(fileNamePar3);
+    std::cout << "step 3 saved nodes map to file!" << std::endl;
 
     // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
     calGlobalIdx();
@@ -269,7 +305,7 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
             int lowerNodeId = getPixelPar(gridIdxX, gridIdxY + 1, localX, 0);
             if (lowerNodeId == -2)  // a new marginal point
                 gridMarginalPoints[localNodeId].push_back(Point{localX, localY});
-            else if (lowerNodeId >= 0 && lowerNodeId != localNodeId) {  // a node pair found
+            else if (lowerNodeId >= 0) {  // a conflict pair found
                 gridNodePairs.insert({
                     encodeNodeId(gridIdxX, gridIdxY, localNodeId),
                     encodeNodeId(gridIdxX, gridIdxY + 1, lowerNodeId)
@@ -288,7 +324,7 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
             int rightNodeId = getPixelPar(gridIdxX + 1, gridIdxY, 0, localY);
             if (rightNodeId == -2)  // a new marginal point
                 gridMarginalPoints[localNodeId].push_back(Point{localX, localY});
-            else if (rightNodeId >= 0 && rightNodeId != localNodeId) {  // a node pair found
+            else if (rightNodeId >= 0) {  // a node pair found
                 gridNodePairs.insert({
                     encodeNodeId(gridIdxX, gridIdxY, localNodeId),
                     encodeNodeId(gridIdxX + 1, gridIdxY, rightNodeId)
