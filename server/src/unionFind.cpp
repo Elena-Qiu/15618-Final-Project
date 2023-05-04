@@ -7,9 +7,9 @@
 unionFind::unionFind(const std::vector<std::vector<int> > &encodedId) {
     for (auto &v : encodedId) {
         for (auto &id : v) {
-            if (mapping.count(id)) {
-                std::cout << "ERROR[UnionFind]: Duplicate encoded Id " << id << std::endl;
-            }
+            // if (mapping.count(id)) {
+            //     std::cout << "ERROR[UnionFind]: Duplicate encoded Id " << id << std::endl;
+            // }
             mapping[id] = id;
             ranks[id] = 1;
         }
@@ -17,12 +17,12 @@ unionFind::unionFind(const std::vector<std::vector<int> > &encodedId) {
 }
 
 void unionFind::unionPair(int x, int y) {
-    if (!mapping.count(x)) {
-        std::cout << "ERROR[UnionFind]: Trying to union non-exist key " << x << "with " << y << std::endl;
-    }
-    if (!mapping.count(y)) {
-        std::cout << "ERROR[UnionFind]: Trying to union non-exist key " << y << "with " << x << std::endl;
-    }
+    // if (!mapping.count(x)) {
+    //     std::cout << "ERROR[UnionFind]: Trying to union non-exist key " << x << "with " << y << std::endl;
+    // }
+    // if (!mapping.count(y)) {
+    //     std::cout << "ERROR[UnionFind]: Trying to union non-exist key " << y << "with " << x << std::endl;
+    // }
     int rootX = find(x);
     int rootY = find(y);
     if (rootX == rootY) {
@@ -59,6 +59,7 @@ std::unordered_map<int,int> unionFind::getCompressedMapping() {
         }
     }
     // assign compressed id to all roots
+    compressedIdNum = compressedId.size();
     int curId = 0;
     for (auto &p : compressedId) {
         compressedId[p.first] = curId++;

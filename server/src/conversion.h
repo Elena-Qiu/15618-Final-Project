@@ -66,7 +66,7 @@ public:
     void printPixelToNodes();
     void saveNodesMapToFile(std::string &fileName);
     void saveEncodedAndConflictToFile(std::string &fileName);
-    
+
 private:
     int w;
     int h;
@@ -92,7 +92,7 @@ private:
     void findEdgesPar();
 
     // for parallel findNodes
-    const int GRID_DIM = 2;
+    const int GRID_DIM = 4;
     std::vector<std::vector<int>> pixelToNodePar;
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
     int getPixelSeq(int x, int y);
@@ -118,7 +118,7 @@ private:
     int getLocalX(int globalX);
     int getLocalY(int globalY);
 
-    void fillAreaPar(int gridIdxX, int gridIdxY, int localW, int localH, int x, int y, int id, std::vector<Point> &localMarginalPoints);
+    bool fillAreaPar(int gridIdxX, int gridIdxY, int localW, int localH, int x, int y, int id, std::vector<Point> &localMarginalPoints);
     void findConflictPairsForGrid(int threadId, pair_set &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
     void findNodesForGrid(int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
     void updateNodeIpForGrid(int threadId);

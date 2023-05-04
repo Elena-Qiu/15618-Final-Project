@@ -20,13 +20,16 @@ int main(int argc, char *argv[]) {
     }
 
     string inputFilePath(argv[1]);
-    string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 11) + "_output.txt";
     char *seqOrNot = argv[2];
     if (strcmp(seqOrNot, "true") == 0) 
         seq = true;
     else if (strcmp(seqOrNot, "false") != 0) {
         cout << "ERROR: 2nd argument should be either \"true\" or \"false\"!" << endl;
         exit(-1);
+    }
+    string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 11) + "_output_seq.txt";
+    if (!seq) {
+        outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 11) + "_output_par.txt";
     }
 
     // solve graph

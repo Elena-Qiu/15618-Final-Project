@@ -180,9 +180,9 @@ void Conversion::findNodesSeq() {
         }
     }
 
-    // for debug
-    std::string fileNameSeq("nodesMap-seq-step7.txt");
-    saveNodesMapToFile(fileNameSeq);
+    // // for debug
+    // std::string fileNameSeq("nodesMap-seq-step7.txt");
+    // saveNodesMapToFile(fileNameSeq);
 }
 
 void Conversion::splitNodesMap() {
@@ -211,9 +211,9 @@ void Conversion::findNodesPar() {
     splitNodesMap();
 
     // for debug
-    std::string fileNamePar1("nodesMap-par-step1.txt");
-    saveNodesMapToFile(fileNamePar1);
-    std::cout << "step 1 saved nodes map to file!" << std::endl;
+    // std::string fileNamePar1("nodesMap-par-step1.txt");
+    // saveNodesMapToFile(fileNamePar1);
+    // std::cout << "step 1 saved nodes map to file!" << std::endl;
 
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
     encodedNodeIdPerGrid.resize(GRID_DIM * GRID_DIM);
@@ -223,36 +223,40 @@ void Conversion::findNodesPar() {
     for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
         // step 2: use openmp to let different nodes process individual grids
         findNodesForGrid(threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
-        
+
     }
 
     // step 3: find node idx pairs that belong to the same global node in parallel
-    for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId)
+    #pragma omp parallel for schedule(dynamic, 1) 
+    for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
         findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
-
-
-    // for debug
-    std::string fileNamePar2("nodesMap-par-step2.txt");
-    saveNodesMapToFile(fileNamePar2);
-    std::cout << "step 2 saved nodes map to file!" << std::endl;
-
-    // for debug
-    std::string fileNamePar3("nodesMap-par-step3.txt");
-    saveEncodedAndConflictToFile(fileNamePar3);
-    std::cout << "step 3 saved nodes map to file!" << std::endl;
-
-    // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
-    calGlobalIdx();
-    std::cout << "step 4 completed!" << std::endl;
-
-    for (auto p : nodeIdMapping) {
-        std::cout << "(" << (p.first >> 16) << ", " << (p.first & 0xFFFF) << ") --> " << p.second << std::endl;
     }
 
     // for debug
-    std::string fileNamePar4("nodesMap-par-step4.txt");
-    saveNodesMapToFile(fileNamePar4);
-    std::cout << "step 4 saved nodes map to file!" << std::endl;
+    // std::string fileNamePar2("nodesMap-par-step2.txt");
+    // saveNodesMapToFile(fileNamePar2);
+    // std::cout << "step 2 saved nodes map to file!" << std::endl;
+
+    // for debug
+    // std::string fileNamePar3("nodesMap-par-step3.txt");
+    // saveEncodedAndConflictToFile(fileNamePar3);
+    // std::cout << "step 3 saved nodes map to file!" << std::endl;
+
+    // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
+    calGlobalIdx();
+    
+    // // for debug
+    // std::cout << "step 4 completed!" << std::endl;
+
+    // for debug
+    // for (auto p : nodeIdMapping) {
+    //     std::cout << "(" << (p.first >> 16) << ", " << (p.first & 0xFFFF) << ") --> " << p.second << std::endl;
+    // }
+
+    // for debug
+    // std::string fileNamePar4("nodesMap-par-step4.txt");
+    // saveNodesMapToFile(fileNamePar4);
+    // std::cout << "step 4 saved nodes map to file!" << std::endl;
     
     // step 5: let each grid updates its node ids in parallel using omp
     // may also convert 4d array back to 2d array in this step
@@ -262,9 +266,9 @@ void Conversion::findNodesPar() {
     }
 
     // for debug
-    std::string fileNamePar5("nodesMap-par-step5.txt");
-    saveNodesMapToFile(fileNamePar5);
-    std::cout << "step 5 saved nodes map to file!" << std::endl;
+    // std::string fileNamePar5("nodesMap-par-step5.txt");
+    // saveNodesMapToFile(fileNamePar5);
+    // std::cout << "step 5 saved nodes map to file!" << std::endl;
 
     // step 6: update the global marginal points
     updateGlobalMarginalPoints(marginalPointsPerGrid);
@@ -278,11 +282,15 @@ void Conversion::updateGlobalMarginalPoints(std::vector<std::vector<std::vector<
             auto &gridMarginalPoints = marginalPointsPerGrid[gridGlobalId];
             for (auto &localMarginalPoints : gridMarginalPoints) {
                 // each margin
+                if (localMarginalPoints.empty())
+                    continue;
+
                 Point &sampleLocation = localMarginalPoints.at(0);
-                int globalNodeId = getPixelPar(gridIdxX, gridIdxY, sampleLocation.x, sampleLocation.y);
+                int globalNodeId = getPixel(sampleLocation.x, sampleLocation.y);
+
                 for (auto &marginalPoint : localMarginalPoints) {
                     // each point
-                    marginalPoints.at(globalNodeId).push_back(marginalPoint);
+                    marginalPoints.at(globalNodeId).emplace_back(marginalPoint);
                 }
             }
         }
@@ -327,7 +335,6 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
         int localY = localH - 1;
         for (int localX = 0; localX < localW; ++localX) {
             int localNodeId = getPixelPar(gridIdxX, gridIdxY, localX, localY);
-            int lowerNodeId = getPixelPar(gridIdxX, gridIdxY + 1, localX, 0);
 
             // for debug
             // printf("thread[%d] lower boundary of grid (%d, %d) with localX=%d, curNodeId=%d, lowerNodeId=%d\n", 
@@ -336,12 +343,17 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
             if (localNodeId == -2)  // is a node boundary, skip
                 continue;
 
+            int lowerNodeId = getPixelPar(gridIdxX, gridIdxY + 1, localX, 0);
             if (lowerNodeId == -2)  // a new marginal point
-                gridMarginalPoints[localNodeId].push_back(Point{localX, localY});
+                gridMarginalPoints[localNodeId].push_back(Point{getGlobalX(gridIdxX, localX), getGlobalY(gridIdxY, localY)});
             else if (lowerNodeId >= 0) {  // a conflict pair found
 
                 // for debug
                 // printf("conflict pair inserted between %d and %d\n", localNodeId, lowerNodeId);
+
+                // // for debug
+                // if (encodeNodeId(gridIdxX, gridIdxY, localNodeId) == 66062 && encodeNodeId(gridIdxX, gridIdxY + 1, lowerNodeId) == 196618)
+                //     printf("findConflictPairs aha\n");
 
                 gridNodePairs.insert({
                     encodeNodeId(gridIdxX, gridIdxY, localNodeId),
@@ -355,7 +367,6 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
         int localX = localW - 1;
         for (int localY = 0; localY < localH; ++localY) {
             int localNodeId = getPixelPar(gridIdxX, gridIdxY, localX, localY);
-            int rightNodeId = getPixelPar(gridIdxX + 1, gridIdxY, 0, localY);
 
             // for debug
             // printf("thread[%d] right boundary of grid (%d, %d) with localY=%d, curNodeId=%d, rightNodeId=%d\n", 
@@ -364,12 +375,17 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
             if (localNodeId == -2)  // is a node boundary, skip
                 continue;
 
+            int rightNodeId = getPixelPar(gridIdxX + 1, gridIdxY, 0, localY);
             if (rightNodeId == -2)  // a new marginal point
-                gridMarginalPoints[localNodeId].push_back(Point{localX, localY});
+                gridMarginalPoints[localNodeId].push_back(Point{getGlobalX(gridIdxX, localX), getGlobalY(gridIdxY, localY)});
             else if (rightNodeId >= 0) {  // a node pair found
 
                 // for debug
                 // printf("conflict pair inserted between %d and %d\n", localNodeId, rightNodeId);
+
+                // for debug
+                if (encodeNodeId(gridIdxX, gridIdxY, localNodeId) == 66062 && encodeNodeId(gridIdxX, gridIdxY + 1, rightNodeId) == 196618)
+                    printf("findConflictPairs aha\n");
 
                 gridNodePairs.insert({
                     encodeNodeId(gridIdxX, gridIdxY, localNodeId),
@@ -385,14 +401,21 @@ void Conversion::findNodesForGrid(int threadId, std::vector<std::vector<Point>> 
     int gridIdxY = threadId / GRID_DIM;
     int localW = getGridWidth(gridIdxX);
     int localH = getGridHeight(gridIdxY);
-    int localNodeNum = 0;
-    for (int y = 0; y < localH; y++) {
-        for (int x = 0; x < localW; x++) {
-            if (getPixelPar(gridIdxX, gridIdxY, x, y) == -1) {
+    int localNodeNum = 0;   
+    for (int localY = 0; localY < localH; localY++) {
+        for (int localX = 0; localX < localW; localX++) {
+            if (getPixelPar(gridIdxX, gridIdxY, localX, localY) == -1) {
                 std::vector<Point> localMarginalPoints;
-                fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, localNodeNum, localMarginalPoints);
-                if (!localMarginalPoints.empty()) {
+                bool found = fillAreaPar(gridIdxX, gridIdxY, localW, localH, localX, localY, localNodeNum, localMarginalPoints);
+                
+                // for debug
+                // if (encodeNodeId(gridIdxX, gridIdxY, localNodeNum) == 66062)
+                //     printf("findNodesForGrid aha\n");
+
+                if (found) {
                     gridEncodedNodeIds.push_back(encodeNodeId(gridIdxX, gridIdxY, localNodeNum));
+                    
+
                     localNodeNum++;
                     gridMarginalPoints.push_back(localMarginalPoints);
                 }
@@ -445,7 +468,7 @@ void Conversion::fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarg
     }
 }
 
-void Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
+bool Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
                                            int localW, int localH,
                                            int x, int y, int id,
                                            std::vector<Point> &localMarginalPoints
@@ -473,7 +496,7 @@ void Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
             if (nx < 0 || nx >= localW || ny < 0 || ny >= localH)
                 continue;
             // check if marginal
-            if (getPixel(nx, ny) == -2)
+            if (getPixelPar(gridIdxX, gridIdxY, nx, ny) == -2)
                 is_marginal = true;
             // skip if visited
             if (visited[nx][ny]) {
@@ -486,14 +509,23 @@ void Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
         }
 
         // check if marginal
-        if (is_marginal)
-            localMarginalPoints.push_back(p);   // TODO: need to change local p to global P?
+        if (is_marginal) {
+
+            // for debug
+            // if (gridIdxX == 1 && gridIdxY == 0 && id == 1) {
+            //     printf("marginal points for node 1\n");
+            // }
+
+            localMarginalPoints.push_back({getGlobalX(gridIdxX, p.x), getGlobalY(gridIdxY, p.y)});   // TODO: need to change local p to global P?
+        }
     }
     // one-pixel bug: if only one pixel, don't count it as separate area
     if (n == 1) {
         setPixelPar(gridIdxX, gridIdxY, x, y, -2);
         localMarginalPoints.clear();
     }
+
+    return n > 1;
 }
 
 int Conversion::getPixelPar(int gridIdxX, int gridIdxY, int x, int y) {
