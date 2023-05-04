@@ -478,9 +478,9 @@ int Conversion::getGridIdxX(int globalX) {
     if (globalX <= division_point) {
         return globalX / quotient;
     }
-    int extra = globalX - division_point;
+    int extra = globalX - division_point - 1;
     int idxExtra = extra / (quotient + 1);
-    return GRID_DIM - remainder + idxExtra - 1;
+    return GRID_DIM - remainder + idxExtra;
 }
 
 int Conversion::getGridIdxY(int globalY) {
@@ -491,9 +491,9 @@ int Conversion::getGridIdxY(int globalY) {
     if (globalY <= division_point) {
         return globalY / quotient;
     }
-    int extra = globalY - division_point;
+    int extra = globalY - division_point - 1;
     int idxExtra = extra / (quotient + 1);
-    return GRID_DIM - remainder + idxExtra - 1;
+    return GRID_DIM - remainder + idxExtra;
 }
 
 int Conversion::getLocalX(int globalX) {
@@ -685,8 +685,7 @@ void Conversion::calGlobalIdx() {
             uf.unionPair(p.first, p.second);
         }
     }
-    uf.compressMapping();
-    nodeIdMapping = std::move(uf.getMapping());
+    nodeIdMapping = std::move(uf.getCompressedMapping());
 }
 
 

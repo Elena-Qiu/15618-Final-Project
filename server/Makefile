@@ -2,7 +2,7 @@ SHELL = /bin/bash
 CC = g++
 CFLAGS = -g -Og -Wall -std=c++14 -I.
 CFLAGS += -MMD -D_FORTIFY_SOURCE=2 -D_XOPEN_SOURCE=700
-#CFLAGS += -O2 -fopenmp
+CFLAGS += -O2 -fopenmp
 
 DEPEND = src/csapp.h src/pipeline.h src/conversion.h src/unionFind.h src/fourColor.h
 PROGRAM = server.cpp src/csapp.c src/pipeline.cpp src/fourColor.cpp src/conversion.cpp src/unionFind.cpp
