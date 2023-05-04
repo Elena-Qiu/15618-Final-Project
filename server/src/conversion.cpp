@@ -12,10 +12,24 @@
 #include "unionFind.h"
 
 int Conversion::getPixel(int x, int y) {
+    if (seq)
+        return getPixelSeq(x, y);
+    else
+        return getPixelPar(x, y);
+}
+
+int Conversion::getPixelSeq(int x, int y) {
     return pixelToNode[y * w + x];
 }
 
 void Conversion::setPixel(int x, int y, int id) {
+    if (seq)
+        return setPixelSeq(x, y, id);
+    else
+        return setPixelPar(x, y, id);
+}
+
+void Conversion::setPixelSeq(int x, int y, int id) {
     pixelToNode[y * w + x] = id;
 }
 
@@ -111,7 +125,7 @@ void Conversion::saveNodesMapToFilePar(std::string &fileName) {
     outFile << h << std::endl;
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            outFile << getPixelPar(x, y) << "\t";
+            outFile << getPixel(x, y) << "\t";
         }
         outFile << std::endl;
     }
@@ -165,9 +179,9 @@ void Conversion::findNodesPar() {
     splitNodesMap();
 
     // for debug
-    std::string fileNamePar("nodesMap-par-step1.txt");
-    saveNodesMapToFilePar(fileNamePar);
-    std::cout << "saved nodes map to file!" << std::endl;
+    std::string fileNamePar1("nodesMap-par-step1.txt");
+    saveNodesMapToFilePar(fileNamePar1);
+    std::cout << "step 1 saved nodes map to file!" << std::endl;
 
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
     encodedNodeIdPerGrid.resize(GRID_DIM * GRID_DIM);
@@ -181,6 +195,11 @@ void Conversion::findNodesPar() {
         // // step 3: find node idx pairs that belong to the same global node in parallel
         // findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
     }
+
+    // for debug
+    std::string fileNamePar2("nodesMap-par-step2.txt");
+    saveNodesMapToFilePar(fileNamePar2);
+    std::cout << "step 2 saved nodes map to file!" << std::endl;
 
     // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
     calGlobalIdx();
@@ -289,7 +308,7 @@ void Conversion::findNodesForGrid(int threadId, std::vector<std::vector<Point>> 
         for (int x = 0; x < localW; x++) {
             if (getPixelPar(gridIdxX, gridIdxY, x, y) == -1) {
                 std::vector<Point> localMarginalPoints;
-                fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, nodeNum, localMarginalPoints);
+                fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, localNodeNum, localMarginalPoints);
                 if (!localMarginalPoints.empty()) {
                     gridEncodedNodeIds.push_back(encodeNodeId(gridIdxX, gridIdxY, localNodeNum));
                     localNodeNum++;
@@ -605,7 +624,7 @@ void Conversion::findEdgesPar() {
                         continue;
                     visited_neighbors.insert(global_idx);
 
-                    int tmpId = getPixelPar(tmpx, tmpy);
+                    int tmpId = getPixel(tmpx, tmpy);
                     if (tmpId >= 0 && tmpId != i) {
                         // if already added as an edge, skip
                         size_t exist;
