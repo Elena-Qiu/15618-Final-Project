@@ -248,6 +248,11 @@ void Conversion::findNodesPar() {
     for (auto p : nodeIdMapping) {
         std::cout << "(" << (p.first >> 16) << ", " << (p.first & 0xFFFF) << ") --> " << p.second << std::endl;
     }
+
+    // for debug
+    std::string fileNamePar4("nodesMap-par-step4.txt");
+    saveNodesMapToFile(fileNamePar4);
+    std::cout << "step 4 saved nodes map to file!" << std::endl;
     
     // step 5: let each grid updates its node ids in parallel using omp
     // may also convert 4d array back to 2d array in this step
@@ -293,8 +298,19 @@ void Conversion::updateNodeIpForGrid(int threadId) {
     int localH = getGridHeight(gridIdxY);
 
     for (int localY = 0; localY < localH; ++localY) {
-        for (int localX = 0; localX < localW; ++localW) {
-            int encodedNodeId = encodeNodeId(gridIdxX, gridIdxY, getPixelPar(gridIdxX, gridIdxY, localX, localY));
+        for (int localX = 0; localX < localW; ++localX) {
+            int curNodeId = getPixelPar(gridIdxX, gridIdxY, localX, localY);
+            // printf("curNodeId is %d\n", curNodeId);
+            // if (curNodeId == 2) {
+            //     printf("gX=%d, gY=%d, lX=%d, lY=%d\n", gridIdxX, gridIdxY, localX, localY);
+            // }
+            if (curNodeId < 0)
+                continue;
+            int encodedNodeId = encodeNodeId(gridIdxX, gridIdxY, curNodeId);
+
+            // for debug
+            // printf("accessing key: grid %d, node %d\n", encodedNodeId >> 16, encodedNodeId & 0xFFFF);
+
             int newNodeId = nodeIdMapping.at(encodedNodeId);
             setPixelPar(gridIdxX, gridIdxY, localX, localY, newNodeId);
         }
@@ -486,7 +502,7 @@ int Conversion::getPixelPar(int gridIdxX, int gridIdxY, int x, int y) {
     int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
     int gridW = getGridWidth(gridIdxX);
     int pixelLocalId = y * gridW + x;
-    return pixelToNodePar[gridGlobalId][pixelLocalId];
+    return pixelToNodePar.at(gridGlobalId).at(pixelLocalId);
 }
 
 int Conversion::getPixelPar(int globalX, int globalY) {

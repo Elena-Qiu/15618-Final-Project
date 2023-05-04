@@ -17,8 +17,17 @@ int getGridIdxX(int globalX) {
     return GRID_DIM - remainder + idxExtra;
 }
 
+int getGridWidth(int gridIdxX) {
+    int quotient = w / GRID_DIM;
+    int remainder = w % GRID_DIM;
+    if (gridIdxX < GRID_DIM - remainder)
+        return quotient;
+    else
+        return quotient + 1;
+}
+
 int main() {
-    for (int i = 0; i < w; ++i) {
-        printf("%d: %d\n", i, getGridIdxX(i));
+    for (int i = 0; i < GRID_DIM; ++i) {
+        printf("%d: %d\n", i, getGridWidth(i));
     }
 }
