@@ -24,9 +24,9 @@ int Conversion::getPixelSeq(int x, int y) {
 
 void Conversion::setPixel(int x, int y, int id) {
     if (seq)
-        return setPixelSeq(x, y, id);
+        setPixelSeq(x, y, id);
     else
-        return setPixelPar(x, y, id);
+        setPixelPar(x, y, id);
 }
 
 void Conversion::setPixelSeq(int x, int y, int id) {
@@ -164,7 +164,7 @@ void Conversion::splitNodesMap() {
                 for (int localX = 0; localX < localW; ++localX) {
                     int pixelGlobalIdxX = getGlobalX(gridIdxX, localX);
                     int pixelGlobalIdxY = getGlobalY(gridIdxY, localY);
-                    int nodeId = getPixel(pixelGlobalIdxX, pixelGlobalIdxY);
+                    int nodeId = getPixelSeq(pixelGlobalIdxX, pixelGlobalIdxY);
                     // printf("in grid (%d, %d), local pixel (%d, %d) has global idx (%d, %d) and nodeId %d\n",
                     //         gridIdxX, gridIdxY, localX, localY, pixelGlobalIdxX, pixelGlobalIdxY, nodeId);
                     pixelToNodePar[gridGlobalId].push_back(nodeId);
@@ -409,7 +409,7 @@ void Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
     }
     // one-pixel bug: if only one pixel, don't count it as separate area
     if (n == 1) {
-        setPixel(x, y, -2);
+        setPixelPar(gridIdxX, gridIdxY, x, y, -2);
         localMarginalPoints.clear();
     }
 }
