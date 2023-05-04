@@ -83,17 +83,19 @@ bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
 bool solveMapHelper(int w, int h, const std::vector<int> &input, std::vector<int> &output) {
     std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
     int timeout = 10;
-    bool seq = true;
+    bool converter_seq = true;
+    bool solver_seq = true;
     std::string adjFile = "adj.txt";
     std::string colorFile = "colors.txt";
     std::string nodesMapFile = "nodesMap.txt";
 
-    Conversion converter;
-    fourColorSolver solver(timeout, seq);
+    Conversion converter(converter_seq);
+    fourColorSolver solver(timeout, solver_seq);
 
     converter.setPixelToNodeArray(w, h, input);
 
-    converter.convertMapToGraph();
+    converter.findNodes();
+    converter.findEdges();
 
     solver.setGraph(converter.getNodeNum(), converter.getEdges());
     solver.saveNodeAdjListToFile(adjFile);

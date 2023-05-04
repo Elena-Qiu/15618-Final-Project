@@ -6,16 +6,26 @@
 #include <iostream>
 #include <chrono>
 #include <unordered_map>
+#include <unordered_set>
 #include "src/unionFind.h"
 
 #ifndef INC_15618_FINAL_PROJECT_CONVERSION_H
 #define INC_15618_FINAL_PROJECT_CONVERSION_H
 
+struct PairHashFunction {
+    size_t operator()(const std::pair<int, int>& p) const
+    {
+        return (std::hash<int>()(p.first)) ^ (std::hash<int>()(p.second));
+    }
+};
+
 using time_point = std::chrono::high_resolution_clock::time_point;
+using pair_set = std::unordered_set<std::pair<int, int>, PairHashFunction>;
 
 const int LINE_EXPANSION = 0;
 const int MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
 const int EDGE_THRESHOLD = 3;
+
 
 typedef struct Point {
     int x;
@@ -48,20 +58,13 @@ public:
     std::vector<std::pair<int,int>> getEdges() {return edges;}
 
     // functions
-    void convertMapToGraph();
+    void findNodes();
+    void findEdges();
     void addMapColors(const std::vector<int>& colors);
 
     // debug
     void printPixelToNodes();
     void saveNodesMapToFile(std::string &fileName);
-
-    // TODO: fix this
-    // for sequential
-    void findNodesSeq(bool bfs=true);
-    void findEdgesSeq();
-    // for parallel
-    void findNodesPar(bool bfs=true);
-    void findEdgesPar();
     void saveNodesMapToFilePar(std::string &fileName);
 
 private:
@@ -79,7 +82,14 @@ private:
     int getPixel(int x, int y);
     void setPixel(int x, int y, int id);
 
-    void fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
+    void fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarginalPoints);
+
+    // for sequential
+    void findNodesSeq();
+    void findEdgesSeq();
+    // for parallel
+    void findNodesPar();
+    void findEdgesPar();
 
     // for parallel findNodes
     const int GRID_DIM = 8;
@@ -87,7 +97,7 @@ private:
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
     // TODO: remember to resize it somewhere
     std::vector<std::vector<int>> encodedNodeIdPerGrid; // collection of encoded node id in all grids
-    std::vector<std::unordered_set<std::pair<int, int>>> conflictPairsPerGrid; // collection of neighboring encoded node id
+    std::vector<pair_set> conflictPairsPerGrid; // collection of neighboring encoded node id
 
     void calGlobalIdx();
 
@@ -106,9 +116,9 @@ private:
     int getLocalX(int globalX);
     int getLocalY(int globalY);
 
-    void fillAreaPar(int gridIdxX, int gridIdxY, int localW, int localH, int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs);
-    void findConflictPairsForGrid(int threadId, std::unordered_set<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
-    void findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
+    void fillAreaPar(int gridIdxX, int gridIdxY, int localW, int localH, int x, int y, int id, std::vector<Point> &localMarginalPoints);
+    void findConflictPairsForGrid(int threadId, pair_set &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
+    void findNodesForGrid(int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
     void updateNodeIpForGrid(int threadId);
     void updateGlobalMarginalPoints(std::vector<std::vector<std::vector<Point>>> &marginalPointsPerGrid);
 };

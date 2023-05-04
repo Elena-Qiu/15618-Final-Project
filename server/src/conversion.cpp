@@ -2,8 +2,6 @@
 // Created by Qiu Yuqing on 2023/4/28.
 //
 #include <deque>
-#include <unordered_set>
-#include <unordered_map>
 #include <fstream>
 #include <sstream>
 #include <math.h>
@@ -94,7 +92,7 @@ void Conversion::saveNodesMapToFile(std::string &fileName) {
     outFile << h << std::endl;
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            outFile << getPixel(x, y) << " ";
+            outFile << getPixel(x, y) << "\t";
         }
         outFile << std::endl;
     }
@@ -113,7 +111,7 @@ void Conversion::saveNodesMapToFilePar(std::string &fileName) {
     outFile << h << std::endl;
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
-            outFile << getPixelPar(x, y) << " ";
+            outFile << getPixelPar(x, y) << "\t";
         }
         outFile << std::endl;
     }
@@ -122,12 +120,12 @@ void Conversion::saveNodesMapToFilePar(std::string &fileName) {
         std::cout << "error writing file \"" << fileName << "\"" << std::endl;
 }
 
-void Conversion::findNodesSeq(bool bfs) {
+void Conversion::findNodesSeq() {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             if (getPixel(x, y) == -1) {
                 std::vector<Point> localMarginalPoints;
-                fillAreaSeq(x, y, nodeNum, localMarginalPoints, bfs);
+                fillAreaSeq(x, y, nodeNum, localMarginalPoints);
                 if (!localMarginalPoints.empty()) {
                     nodeNum++;
                     marginalPoints.push_back(localMarginalPoints);
@@ -135,6 +133,10 @@ void Conversion::findNodesSeq(bool bfs) {
             }
         }
     }
+
+    // for debug
+    std::string fileNameSeq("nodesMap-seq-step7.txt");
+    saveNodesMapToFile(fileNameSeq);
 }
 
 void Conversion::splitNodesMap() {
@@ -149,6 +151,8 @@ void Conversion::splitNodesMap() {
                     int pixelGlobalIdxX = getGlobalX(gridIdxX, localX);
                     int pixelGlobalIdxY = getGlobalY(gridIdxY, localY);
                     int nodeId = getPixel(pixelGlobalIdxX, pixelGlobalIdxY);
+                    // printf("in grid (%d, %d), local pixel (%d, %d) has global idx (%d, %d) and nodeId %d\n",
+                    //         gridIdxX, gridIdxY, localX, localY, pixelGlobalIdxX, pixelGlobalIdxY, nodeId);
                     pixelToNodePar[gridGlobalId].push_back(nodeId);
                 }
             }
@@ -156,21 +160,26 @@ void Conversion::splitNodesMap() {
     }
 }
 
-void Conversion::findNodesPar(bool bfs) {
+void Conversion::findNodesPar() {
     // step 1: convert nodes_map to 4d array
     splitNodesMap();
 
+    // for debug
+    std::string fileNamePar("nodesMap-par-step1.txt");
+    saveNodesMapToFilePar(fileNamePar);
+    std::cout << "saved nodes map to file!" << std::endl;
+
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
+    encodedNodeIdPerGrid.resize(GRID_DIM * GRID_DIM);
+    conflictPairsPerGrid.resize(GRID_DIM * GRID_DIM);
 
-    #pragma omp parallel for schedule(dynamic) 
-    {
-        int threadId = omp_get_thread_num();
-
+    #pragma omp parallel for schedule(dynamic, 1) 
+    for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
         // step 2: use openmp to let different nodes process individual grids
-        findNodesForGrid(bfs, threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
+        findNodesForGrid(threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
         
-        // step 3: find node idx pairs that belong to the same global node in parallel
-        findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
+        // // step 3: find node idx pairs that belong to the same global node in parallel
+        // findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
     }
 
     // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
@@ -178,9 +187,8 @@ void Conversion::findNodesPar(bool bfs) {
     
     // step 5: let each grid updates its node ids in parallel using omp
     // may also convert 4d array back to 2d array in this step
-    #pragma omp parallel for schedule(dynamic) shared(nodeIdMapping)
-    {
-        int threadId = omp_get_thread_num();
+    #pragma omp parallel for schedule(dynamic, 1) shared(nodeIdMapping)
+    for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
         updateNodeIpForGrid(threadId);
     }
 
@@ -224,7 +232,7 @@ void Conversion::updateNodeIpForGrid(int threadId) {
     }
 }
 
-void Conversion::findConflictPairsForGrid(int threadId, std::unordered_set<std::pair<int, int>> &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints) {
+void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints) {
     // TODO: find node pairs and update marginal points
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
@@ -271,7 +279,7 @@ void Conversion::findConflictPairsForGrid(int threadId, std::unordered_set<std::
     }
 }
 
-void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds) {
+void Conversion::findNodesForGrid(int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds) {
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
     int localW = getGridWidth(gridIdxX);
@@ -281,7 +289,7 @@ void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vecto
         for (int x = 0; x < localW; x++) {
             if (getPixelPar(gridIdxX, gridIdxY, x, y) == -1) {
                 std::vector<Point> localMarginalPoints;
-                fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, nodeNum, localMarginalPoints, bfs);
+                fillAreaPar(gridIdxX, gridIdxY, localW, localH, x, y, nodeNum, localMarginalPoints);
                 if (!localMarginalPoints.empty()) {
                     gridEncodedNodeIds.push_back(encodeNodeId(gridIdxX, gridIdxY, localNodeNum));
                     localNodeNum++;
@@ -292,15 +300,11 @@ void Conversion::findNodesForGrid(bool bfs, int threadId, std::vector<std::vecto
     }
 }
 
-void Conversion::fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarginalPoints, bool bfs) {
+void Conversion::fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarginalPoints) {
     int n = 0;
     std::vector<std::vector<bool>> visited(w, std::vector<bool>(h, false));
     std::deque<Point> qu;
-    if (bfs) {
-        qu.emplace_back(Point{x, y});
-    } else {
-        qu.emplace_front(Point{x, y});
-    }
+    qu.emplace_front(Point{x, y});
 
     std::vector<std::pair<int,int>> dirs = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
 
@@ -324,11 +328,7 @@ void Conversion::fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarg
                 continue;
             }
             if (getPixel(nx, ny) == -1) {
-                if (bfs) {
-                    qu.push_back({nx, ny});
-                } else {
-                    qu.push_front({nx, ny});
-                }
+                qu.push_front({nx, ny});
             }
             visited[nx][ny] = true;
         }
@@ -347,16 +347,12 @@ void Conversion::fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarg
 void Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
                                            int localW, int localH,
                                            int x, int y, int id,
-                                           std::vector<Point> &localMarginalPoints,
-                                           bool bfs) {
+                                           std::vector<Point> &localMarginalPoints
+                                           ) {
     int n = 0;
     std::vector<std::vector<bool>> visited(w, std::vector<bool>(h, false));
     std::deque<Point> qu;
-    if (bfs) {
-        qu.emplace_back(Point{x, y});
-    } else {
-        qu.emplace_front(Point{x, y});
-    }
+    qu.emplace_front(Point{x, y});
 
     std::vector<std::pair<int,int>> dirs = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
 
@@ -383,11 +379,7 @@ void Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
                 continue;
             }
             if (getPixelPar(gridIdxX, gridIdxY, nx, ny) == -1) {
-                if (bfs) {
-                    qu.push_back({nx, ny});
-                } else {
-                    qu.push_front({nx, ny});
-                }
+                qu.push_front({nx, ny});
             }
             visited[nx][ny] = true;
         }
@@ -415,7 +407,7 @@ int Conversion::getPixelPar(int globalX, int globalY) {
     int gridIdxY = getGridIdxY(globalY);
     int localX = getLocalX(globalX);
     int localY = getLocalY(globalY);
-    getPixelPar(gridIdxX, gridIdxY, localX, localY);
+    return getPixelPar(gridIdxX, gridIdxY, localX, localY);
 }
 
 void Conversion::setPixelPar(int gridIdxX, int gridIdxY, int x, int y, int id) {
@@ -480,26 +472,28 @@ int Conversion::getGlobalY(int gridIdxY, int localY) {
 
 int Conversion::getGridIdxX(int globalX) {
     int quotient = w / GRID_DIM;
-    int possibleGridIdxX = globalX / quotient;
+    int remainder = w % GRID_DIM;
+    int division_point = (GRID_DIM - remainder) * quotient - 1;
 
-    // check whether possible is true
-    int possibleBaseX = getGlobalX(possibleGridIdxX, 0);
-    if (possibleBaseX > globalX)
-        possibleGridIdxX --;
-
-    return possibleGridIdxX;
+    if (globalX <= division_point) {
+        return globalX / quotient;
+    }
+    int extra = globalX - division_point;
+    int idxExtra = extra / (quotient + 1);
+    return GRID_DIM - remainder + idxExtra - 1;
 }
 
 int Conversion::getGridIdxY(int globalY) {
     int quotient = h / GRID_DIM;
-    int possibleGridIdxY = globalY / quotient;
+    int remainder = h % GRID_DIM;
+    int division_point = (GRID_DIM - remainder) * quotient - 1;
 
-    // check whether possible is true
-    int possibleBaseY = getGlobalY(possibleGridIdxY, 0);
-    if (possibleBaseY > globalY)
-        possibleGridIdxY --;
-
-    return possibleGridIdxY;
+    if (globalY <= division_point) {
+        return globalY / quotient;
+    }
+    int extra = globalY - division_point;
+    int idxExtra = extra / (quotient + 1);
+    return GRID_DIM - remainder + idxExtra - 1;
 }
 
 int Conversion::getLocalX(int globalX) {
@@ -611,7 +605,7 @@ void Conversion::findEdgesPar() {
                         continue;
                     visited_neighbors.insert(global_idx);
 
-                    int tmpId = getPixel(tmpx, tmpy);
+                    int tmpId = getPixelPar(tmpx, tmpy);
                     if (tmpId >= 0 && tmpId != i) {
                         // if already added as an edge, skip
                         size_t exist;
@@ -656,12 +650,18 @@ void Conversion::findEdgesPar() {
     }
 }
 
-void Conversion::convertMapToGraph() {
+void Conversion::findNodes() {
     if (seq) {
         findNodesSeq();
+    } else {
+        findNodesPar();
+    }
+}
+
+void Conversion::findEdges() {
+    if (seq) {
         findEdgesSeq();
     } else {
-        findEdgesPar();
         findEdgesPar();
     }
 }
