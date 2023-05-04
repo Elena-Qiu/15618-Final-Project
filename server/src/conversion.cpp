@@ -533,7 +533,7 @@ int Conversion::getPixelPar(int gridIdxX, int gridIdxY, int x, int y) {
     // int gridW = getGridWidth(gridIdxX);
     // int pixelLocalId = y * gridW + x;
     // return pixelToNodePar.at(gridGlobalId).at(pixelLocalId);
-    return -1;
+    return getPixelSeq(getGlobalX(gridIdxX, x), getGlobalY(gridIdxY, y));
 }
 
 int Conversion::getPixelPar(int globalX, int globalY) {
@@ -550,6 +550,7 @@ void Conversion::setPixelPar(int gridIdxX, int gridIdxY, int x, int y, int id) {
     // int gridW = getGridWidth(gridIdxX);
     // int pixelLocalId = y * gridW + x;
     // pixelToNodePar[gridGlobalId][pixelLocalId] = id;
+    setPixelSeq(getGlobalX(gridIdxX, x), getGlobalY(gridIdxY, y), id);
 }
 
 void Conversion::setPixelPar(int globalX, int globalY, int id) {
