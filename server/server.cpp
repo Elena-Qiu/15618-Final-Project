@@ -116,6 +116,8 @@ static void serve(client_info *client) {
     rio_t rio;
     rio_readinitb(&rio, client->connfd);
 
+    printf("\n********************************************************************\n");
+
     // check the request
     if (parse_request(&rio) == false) {
         return;
