@@ -52,9 +52,6 @@ public:
         w = _w;
         h = _h;
         pixelToNode = arr;
-        if (seq == false) {
-            splitNodesMap();
-        }
     }
     std::vector<int>& getPixelToNodeArray() {return pixelToNode;}
     int getNodeNum() const {return nodeNum;}
@@ -96,7 +93,6 @@ private:
 
     // for parallel findNodes
     const int GRID_DIM = 4;
-    std::vector<std::vector<int>> pixelToNodePar;
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
     int getPixelSeq(int x, int y);
     void setPixelSeq(int x, int y, int id);
@@ -106,7 +102,6 @@ private:
 
     void calGlobalIdx();
 
-    void splitNodesMap();
     int getPixelPar(int gridIdxX, int gridIdxY, int localX, int localY);
     int getPixelPar(int globalX, int globalY);
     void setPixelPar(int gridIdxX, int gridIdxY, int localX, int localY, int id);
