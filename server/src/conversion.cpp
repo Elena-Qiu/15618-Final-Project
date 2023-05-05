@@ -485,12 +485,11 @@ void Conversion::setPixelPar(int gridIdxX, int gridIdxY, int x, int y, int id) {
 }
 
 void Conversion::setPixelPar(int globalX, int globalY, int id) {
-    // int gridIdxX = getGridIdxX(globalX);
-    // int gridIdxY = getGridIdxY(globalY);
-    // int localX = getLocalX(globalX);
-    // int localY = getLocalY(globalY);
-    // setPixelPar(gridIdxX, gridIdxY, localX, localY, id);
-    setPixelSeq(globalX, globalY, id);
+    int gridIdxX = getGridIdxX(globalX);
+    int gridIdxY = getGridIdxY(globalY);
+    int localX = getLocalX(globalX);
+    int localY = getLocalY(globalY);
+    setPixelPar(gridIdxX, gridIdxY, localX, localY, id);
 }
 
 int Conversion::getGridWidth(int gridIdxX) {
