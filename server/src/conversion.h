@@ -24,7 +24,7 @@ using pair_set = std::unordered_set<std::pair<int, int>, PairHashFunction>;
 
 const int LINE_EXPANSION = 0;
 const int MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
-const int EDGE_THRESHOLD = 3;
+const int EDGE_THRESHOLD = 10;
 
 
 typedef struct Point {
@@ -92,7 +92,7 @@ private:
     void findEdgesPar();
 
     // for parallel findNodes
-    const int GRID_DIM = 4;
+    const int GRID_DIM = 32;
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
     int getPixelSeq(int x, int y);
     void setPixelSeq(int x, int y, int id);
