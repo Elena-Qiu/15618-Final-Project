@@ -479,7 +479,7 @@ bool Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
                                            std::vector<Point> &localMarginalPoints
                                            ) {
     int n = 0;
-    std::vector<std::vector<bool>> visited(w, std::vector<bool>(h, false));
+    std::vector<std::vector<bool>> visited(localW, std::vector<bool>(localH, false));
     std::deque<Point> qu;
     qu.emplace_front(Point{x, y});
 
