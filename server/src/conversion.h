@@ -52,6 +52,9 @@ public:
         w = _w;
         h = _h;
         pixelToNode = arr;
+        if (seq == false) {
+            splitNodesMap();
+        }
     }
     std::vector<int>& getPixelToNodeArray() {return pixelToNode;}
     int getNodeNum() const {return nodeNum;}
