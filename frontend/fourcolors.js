@@ -11,8 +11,8 @@ const PORT = "8080";
 const VALID_URI = "getMapSolution";
 
 /* Some general variables. */
-const h = 200; // height of the canvas
-const w = 200; // width of the canvas
+let h = 1000; // height of the canvas
+let w = 1000; // width of the canvas
 const LINE_EXPANSION = 0;
 const MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
 const EDGE_THRESHOLD = 3;
@@ -29,19 +29,23 @@ let white;
 let black;
 
 // arrays
-let nodes_map; // size w*h, recording the id of the node for each pixel (-1 for undefined, -2 for pixels on edges)
-let nodes_num = 0;
-let edges; // adjacent list: edges[i] is an array with the indices j such that node i and node j are connected
-let edges_num = 0;
+let nodes_map; // size w*h, recording the id of the node for each pixel (-1 for undefined, -2 for pixels on borders)
 let colors = [];
 let sequential = true;
 
+let example_input;
+let exampleFileName;
+
 const STATES = {
     DRAWING: 0,
-    IMAGE_LOADED: 1,
     START_SOLVING: 2,
     SOLVING: 3,
     FINISHED: 4,
+    READ_EXAMPLE_FILE: 5,
+    READING: 6,
+    PARSE_EXAMPLE: 7,
+    PARSING: 8,
+    EXAMPLE_LOADED: 9,
 };
 
 let start, end;
@@ -89,8 +93,6 @@ function draw() {
         case STATES.DRAWING:
             displayNodesMap();
             break;
-        case STATES.IMAGE_LOADED:
-            break;
         case STATES.START_SOLVING:
             state = STATES.SOLVING;
             solve(() => {
@@ -100,11 +102,57 @@ function draw() {
                     update_status(`spent ${time_spent_total} ms for solving`);
                 else
                     update_status(`spent ${time_spent_total / 1000} s for solving`);
+                noLoop();
             });
+            break;
+        case STATES.READ_EXAMPLE_FILE:
+            dragging = false;
+            update_status(`loading example ${exampleFileName}`);
+            loadStrings(
+                exampleFileName, 
+                (result) => {
+                    example_input = result;
+                    state = STATES.PARSE_EXAMPLE;
+                }
+            );
+            update_status("reading...");
+            state = STATES.READING;
+            break;
+        case STATES.READING:
+            break;
+        case STATES.PARSE_EXAMPLE:
+            parseExample();
+            break;
+        case STATES.PARSING:
+            break;
+        case STATES.EXAMPLE_LOADED:
+            displayNodesMap();
             break;
         default:
             break;
     }
+}
+
+function parseExample() {
+    state = STATES.PARSING;
+    update_status(`parsing example ${exampleFileName}`);
+    let nw = parseInt(example_input[0]);
+    let nh = parseInt(example_input[1]);
+
+    if (w != nw || h != nh) {
+        console.log("example size incosistent with canvas size!");
+        state = STATES.DRAWING;
+        return;
+    }
+
+    nodes_map = new Array(w * h);
+
+    for (let i = 2; i < example_input.length; ++i) {
+        // nodesmap
+        let idx = i - 2;
+        nodes_map[idx] = parseInt(example_input[i]);
+    }
+    state = STATES.EXAMPLE_LOADED;
 }
 
 function displayNodesMap() {
@@ -238,7 +286,7 @@ function set_pixel_color(x, y, c) {
 /* Main solving method.
 The solving takes place in stages and logs its progress. */
 async function solve(callback) {
-    update_status("solving at backend");
+    update_status("solving at backend in " + (sequential ? "sequential" : "parallel"));
     loadPixels();
     await solve_graph();
     updatePixels();
@@ -293,8 +341,7 @@ function update_status(s) {
 /* -------- buttons -------- */
 
 function button_solve(seq) {
-    console.log(seq ? "sequential" : "parallel");
-    if (state === STATES.DRAWING || state === STATES.IMAGE_LOADED) {
+    if (state === STATES.DRAWING || state === STATES.EXAMPLE_LOADED) {
         solve_start = millis();
         state = STATES.START_SOLVING;
         sequential = seq;
@@ -316,25 +363,15 @@ function button_reset() {
     state = STATES.DRAWING;
     document.getElementById("log").innerHTML = "";
     nodes = [];
-    edges = [];
-    nodes_num = 0;
-    edges_num = 0;
 
     loop();
 }
 
-function button_load_image(s) {
+function button_load_example(fileName) {
+    exampleFileName = fileName;
+    console.log('loading file ' + fileName);
     button_reset();
-    let canvas = document.getElementById("canvas");
-    let context = canvas.getContext("2d");
-    let img = new Image();
-    state = STATES.IMAGE_LOADED;
-    img.onload = function () {
-        context.drawImage(this, 0, 0, w, h);
-        loadPixels();
-        set_nodes_map_with_pixels();
-    };
-    img.src = s;
+    state = STATES.READ_EXAMPLE_FILE;
 }
 
 

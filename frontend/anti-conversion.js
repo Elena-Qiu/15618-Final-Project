@@ -1,7 +1,7 @@
-const w = 100;
-const h = 100;
-// const fileName = "testcases/naive2.txt";
-const fileName = "testcases/naive3.txt";
+const w = 1000;
+const h = 1000;
+
+let fileName = 'testcases/good_40_100_4s.txt';
 
 const UNDEFINED = -1;
 const BOUNDARY = -2;
@@ -18,12 +18,13 @@ let completedOrigins = new Set();
 let input;
 
 const STATES = {
-    INITIAL: 0,
+    ANTI_INITIAL: 0,
     LINES: 1,
     SHAPES: 2,
-    FINISHED: 3,
+    ANTI_FINISHED: 3,
+    NONE: 4,
 };
-let state = STATES.INITIAL;
+let state = STATES.ANTI_INITIAL;
 
 const originalBase = -100;
 const originalScale = 200;
@@ -62,14 +63,17 @@ function setup() {
     let canvas = createCanvas(w, h);
     canvas.id("canvas");
     canvas.parent(document.querySelector("#canvasContainer"));
-    frameRate(5);
+    frameRate(15);
     loadPixels();
     textSize(16);
 }
 
 // iteratively expand all areas to form the final map. Follows a FSM structure
 function draw() {
-    if (state === STATES.INITIAL) {
+    if (state === STATES.NONE)
+        return;
+    
+    if (state === STATES.ANTI_INITIAL) {
         let res = drawLines();
         if (res === EXPAND_STATES.FAIL) {
             console.log("draw line failed!");
@@ -91,9 +95,9 @@ function draw() {
         let res = expandShapes();
         if (res === EXPAND_STATES.COMPLETED) {
             console.log("expanding all finished");
-            state = STATES.FINISHED;
+            state = STATES.ANTI_FINISHED;
         }
-    } else if (state === STATES.FINISHED) {
+    } else if (state === STATES.ANTI_FINISHED) {
         noLoop();
     } else {
         console.log("impossible!");
@@ -359,7 +363,7 @@ function applyNodesMap() {
             if (get_nodes_map(x, y) === BOUNDARY) {
                 set_pixel_color(x, y, black);
             } else if (get_nodes_map(x, y) == FIXED) {
-                set_pixel_color(x, y, color("#FF0000"));
+                set_pixel_color(x, y, color("#000000"));
             } else {
                 set_pixel_color(x, y, white);
             }
@@ -379,4 +383,44 @@ function set_pixel_color(x, y, c) {
             pixels[index + 3] = alpha(c);
         }
     }
+}
+
+
+// download the generated testcase
+function button_solve(seq) {
+    nodes_map_copy = [];
+    for (let i = 0; i < nodes_map.length; ++i) {
+        if (nodes_map[i] == FIXED)
+            nodes_map_copy.push(BOUNDARY);
+        else
+            nodes_map_copy.push(UNDEFINED);
+    }
+
+    let input = w + '\n' + h + '\n';
+    input += nodes_map_copy.join('\n');
+
+    let writer = createWriter(fileName.split('.')[0] + '_example.txt');
+    writer.print(input);
+    writer.close();
+    writer.clear();
+}
+
+
+async function button_load_example(file) {
+    fileName = file;
+    console.log('loading file ' + fileName);
+    button_reset();
+    input = await loadStrings(fileName);
+
+    if (readTestCase() == false) {
+        console.log("setup failed");
+        noLoop();
+    }
+}
+
+
+function button_reset() {
+    frameRate(5);
+    state = STATES.ANTI_INITIAL;
+    loop();
 }
