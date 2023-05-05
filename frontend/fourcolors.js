@@ -34,6 +34,7 @@ let nodes_num = 0;
 let edges; // adjacent list: edges[i] is an array with the indices j such that node i and node j are connected
 let edges_num = 0;
 let colors = [];
+let sequential = true;
 
 const STATES = {
     DRAWING: 0,
@@ -256,7 +257,7 @@ async function solve_graph() {
         return responseText;
     }
 
-    let input = convertNodeMapToString(pixels);
+    let input = sequential + "\n" + convertNodeMapToString(pixels);
     let solutionStr = await solveAtServer(input);
     convertStringToNodeMap(solutionStr);
     updatePixelsWithNodeMap();
@@ -291,10 +292,12 @@ function update_status(s) {
 
 /* -------- buttons -------- */
 
-function button_solve() {
+function button_solve(seq) {
+    console.log(seq ? "sequential" : "parallel");
     if (state === STATES.DRAWING || state === STATES.IMAGE_LOADED) {
         solve_start = millis();
         state = STATES.START_SOLVING;
+        sequential = seq;
     }
     frameRate(5);
 }
@@ -318,17 +321,6 @@ function button_reset() {
     edges_num = 0;
 
     loop();
-}
-
-function button_generate_image() {
-    let img_data = document.getElementsByTagName("canvas")[0].toDataURL();
-    if (document.getElementById("data").innerHTML === "") {
-        document.getElementById("data").innerHTML =
-            'Snapshots: <br> <img height="50" src="' + img_data + '">';
-    } else {
-        document.getElementById("data").innerHTML +=
-            '<img height="50" src="' + img_data + '">';
-    }
 }
 
 function button_load_image(s) {

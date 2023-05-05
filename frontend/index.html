@@ -9,8 +9,8 @@
     <h1>Draw on me!</h1>
     <div id="canvasContainer" style="padding: 50px;"></div>
     <button onClick="button_reset()">Reset</button>
-    <button onClick="button_solve()">Solve</button>
-    <button onClick="button_generate_image()">Generate Image</button><br>
+    <button onClick="button_solve(true)">Sequential Solve</button>
+    <button onClick="button_solve(false)">Parallel Solve</button>
     <img onClick="button_load_image(this.src)" height="50" src="examples/img01.png"></img>
     <img onClick="button_load_image(this.src)" height="50" src="examples/img02.png"></img>
     <img onClick="button_load_image(this.src)" height="50" src="examples/img03.png"></img>
