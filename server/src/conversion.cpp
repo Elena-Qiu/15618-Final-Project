@@ -66,8 +66,17 @@ int Conversion::loadFromFile(std::string &fileName) {
     h = (int)atoi(str.c_str());
 
     // read nodes map
-    pixelToNode.resize(w * h);
-    int count = 0, globalX, globalY;
+    if (seq) {
+        pixelToNode.resize(w * h);
+    } else {
+        pixelToNodePar.resize(GRID_DIM * GRID_DIM);
+        for (int i = 0; i < GRID_DIM * GRID_DIM; ++i) {
+            int gridIdxX = i % GRID_DIM;
+            int gridIdxY = i / GRID_DIM;
+            pixelToNodePar[i].resize(getGridWidth(gridIdxX) * getGridHeight(gridIdxY));
+        }
+    }
+    int count = 0, globalX, globalY, nodeId;
     while (std::getline(inFile, line)) {
         // skip empty line
         if (line.empty()) {
@@ -80,7 +89,9 @@ int Conversion::loadFromFile(std::string &fileName) {
         std::stringstream sstream(line);
         std::string str;
         std::getline(sstream, str, '\n');
-        setPixelSeq(globalX, globalY, (int)atoi(str.c_str()));
+
+        nodeId = (int)atoi(str.c_str());
+        setPixel(globalX, globalY, nodeId);
     }
     inFile.close();
     return SUCCESS;
@@ -452,18 +463,33 @@ bool Conversion::fillAreaPar(int gridIdxX, int gridIdxY,
 }
 
 int Conversion::getPixelPar(int gridIdxX, int gridIdxY, int x, int y) {
-    return getPixelSeq(getGlobalX(gridIdxX, x), getGlobalY(gridIdxY, y));
+    int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
+    int gridW = getGridWidth(gridIdxX);
+    int pixelLocalId = y * gridW + x;
+    return pixelToNodePar.at(gridGlobalId).at(pixelLocalId);
 }
 
 int Conversion::getPixelPar(int globalX, int globalY) {
-    return getPixelSeq(globalX, globalY);
+    int gridIdxX = getGridIdxX(globalX);
+    int gridIdxY = getGridIdxY(globalY);
+    int localX = getLocalX(globalX);
+    int localY = getLocalY(globalY);
+    return getPixelPar(gridIdxX, gridIdxY, localX, localY);
 }
 
 void Conversion::setPixelPar(int gridIdxX, int gridIdxY, int x, int y, int id) {
-    setPixelSeq(getGlobalX(gridIdxX, x), getGlobalY(gridIdxY, y), id);
+    int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
+    int gridW = getGridWidth(gridIdxX);
+    int pixelLocalId = y * gridW + x;
+    pixelToNodePar[gridGlobalId][pixelLocalId] = id;
 }
 
 void Conversion::setPixelPar(int globalX, int globalY, int id) {
+    // int gridIdxX = getGridIdxX(globalX);
+    // int gridIdxY = getGridIdxY(globalY);
+    // int localX = getLocalX(globalX);
+    // int localY = getLocalY(globalY);
+    // setPixelPar(gridIdxX, gridIdxY, localX, localY, id);
     setPixelSeq(globalX, globalY, id);
 }
 
