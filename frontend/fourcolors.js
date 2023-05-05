@@ -286,7 +286,7 @@ function set_pixel_color(x, y, c) {
 /* Main solving method.
 The solving takes place in stages and logs its progress. */
 async function solve(callback) {
-    update_status("solving at backend in " + (sequential ? "sequential" : "parallel"));
+    update_status("solving at backend");
     loadPixels();
     await solve_graph();
     updatePixels();
