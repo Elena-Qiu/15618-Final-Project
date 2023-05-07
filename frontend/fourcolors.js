@@ -7,7 +7,7 @@ Pure gold: https://p5js.org/reference
 
 // server's connection option
 const IP = "http://ghc63.ghc.andrew.cmu.edu";
-const PORT = "8080";
+const PORT = "8081";
 const VALID_URI = "getMapSolution";
 
 /* Some general variables. */
