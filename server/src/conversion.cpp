@@ -186,7 +186,7 @@ void Conversion::findNodesSeq() {
             }
         }
     }
-    printf("found %d nodes\n", nodeNum - 1);
+    printf("found %d nodes\n", nodeNum);
 }
 
 void Conversion::findNodesPar() {
