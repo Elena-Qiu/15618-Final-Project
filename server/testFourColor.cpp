@@ -5,12 +5,14 @@
 #include <string.h>
 
 #include "src/fourColor.h"
-#include "src/testGenerater.h"
+#include "src/testGenerator.h"
 
 using namespace std;
 
 // int main(int argc, char *argv[]) {
-//    // ./FourColor [n] [e] [scale] [edgeTimeOut] [solveTimeout] [inputFileName]
+//    // ./fourcolor [n] [e] [scale] [edgeTimeOut] [solveTimeout] [inputFileName]
+//    std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
+//
 //    if (argc != 7) {
 //        cout << "ERROR: argument number should be 6\n";
 //    }
@@ -50,13 +52,12 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
-    // ./FourColor testcase
+    // ./fourColor testcase
     if (argc != 3) {
         cout << "ERROR: argument number should be 3: ./fourcolor-release testcaseFilePath sequentialOrNot(\"true\" or \"false\")\n";
         exit(-1);
     }
     string inputFilePath(argv[1]);
-    string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 4) + "_output.txt";
     char *seqOrNot = argv[2];
     bool seq = false;
     if (strcmp(seqOrNot, "true") == 0)
@@ -66,8 +67,13 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
+    string outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 4) + "_output_seq.txt";
+    if (!seq) {
+        outputFilePath = inputFilePath.substr(0, inputFilePath.size() - 4) + "_output_par.txt";
+    }
+
     // solve graph
-    int solveTimeOut = 60;
+    int solveTimeOut = 15;
     fourColorSolver solver(solveTimeOut, seq);
 
     auto fileLoadResult = return_status_array[solver.loadFromFile(inputFilePath)];

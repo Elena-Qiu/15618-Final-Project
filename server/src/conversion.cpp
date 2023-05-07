@@ -200,93 +200,57 @@ void Conversion::findNodesSeq() {
     // saveNodesMapToFile(fileNameSeq);
 }
 
-void Conversion::splitNodesMap() {
-    // for (int gridIdxY = 0; gridIdxY < GRID_DIM; ++gridIdxY) {
-    //     for (int gridIdxX = 0; gridIdxX < GRID_DIM; ++gridIdxX) {
-    //         int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
-    //         pixelToNodePar.push_back(std::vector<int>());
-    //         int localW = getGridWidth(gridIdxX);
-    //         int localH = getGridHeight(gridIdxY);
-    //         for (int localY = 0; localY < localH; ++localY) {
-    //             for (int localX = 0; localX < localW; ++localX) {
-    //                 int pixelGlobalIdxX = getGlobalX(gridIdxX, localX);
-    //                 int pixelGlobalIdxY = getGlobalY(gridIdxY, localY);
-    //                 int nodeId = getPixelSeq(pixelGlobalIdxX, pixelGlobalIdxY);
-    //                 // printf("in grid (%d, %d), local pixel (%d, %d) has global idx (%d, %d) and nodeId %d\n",
-    //                 //         gridIdxX, gridIdxY, localX, localY, pixelGlobalIdxX, pixelGlobalIdxY, nodeId);
-    //                 pixelToNodePar[gridGlobalId].push_back(nodeId);
-    //             }
-    //         }
-    //     }
-    // }
-}
-
 void Conversion::findNodesPar() {
-    // step 1: convert nodes_map to 4d array
-    splitNodesMap();
-
-    // for debug
-    // std::string fileNamePar1("nodesMap-par-step1.txt");
-    // saveNodesMapToFile(fileNamePar1);
-    // std::cout << "step 1 saved nodes map to file!" << std::endl;
-
     std::vector<std::vector<std::vector<Point>>> marginalPointsPerGrid(GRID_DIM * GRID_DIM);
     encodedNodeIdPerGrid.resize(GRID_DIM * GRID_DIM);
     conflictPairsPerGrid.resize(GRID_DIM * GRID_DIM);
 
+    auto start = std::chrono::high_resolution_clock::now();
+    // step 2: use openmp to let different nodes process individual grids
     #pragma omp parallel for schedule(dynamic, 1) 
     for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
-        // step 2: use openmp to let different nodes process individual grids
         findNodesForGrid(threadId, marginalPointsPerGrid[threadId], encodedNodeIdPerGrid[threadId]);
 
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto step2_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    // step 3: find node idx pairs that belong to the same global node in parallel
+    start = std::chrono::high_resolution_clock::now();
+    // step 3.1: find node idx pairs that belong to the same global node in parallel
     #pragma omp parallel for schedule(dynamic, 1) 
     for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
         findConflictPairsForGrid(threadId, conflictPairsPerGrid[threadId], marginalPointsPerGrid[threadId]);
     }
+    end = std::chrono::high_resolution_clock::now();
+    auto step31_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    // for debug
-    // std::string fileNamePar2("nodesMap-par-step2.txt");
-    // saveNodesMapToFile(fileNamePar2);
-    // std::cout << "step 2 saved nodes map to file!" << std::endl;
-
-    // for debug
-    // std::string fileNamePar3("nodesMap-par-step3.txt");
-    // saveEncodedAndConflictToFile(fileNamePar3);
-    // std::cout << "step 3 saved nodes map to file!" << std::endl;
-
-    // step 4: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
+    start = std::chrono::high_resolution_clock::now();
+    // step 3.2: build a global UnionFind using conflictPairsPerGrid, and finalize node ids
     calGlobalIdx();
-    
-    // // for debug
-    // std::cout << "step 4 completed!" << std::endl;
+    end = std::chrono::high_resolution_clock::now();
+    auto step32_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    // for debug
-    // for (auto p : nodeIdMapping) {
-    //     std::cout << "(" << (p.first >> 16) << ", " << (p.first & 0xFFFF) << ") --> " << p.second << std::endl;
-    // }
-
-    // for debug
-    // std::string fileNamePar4("nodesMap-par-step4.txt");
-    // saveNodesMapToFile(fileNamePar4);
-    // std::cout << "step 4 saved nodes map to file!" << std::endl;
-    
-    // step 5: let each grid updates its node ids in parallel using omp
+    start = std::chrono::high_resolution_clock::now();
+    // step 4.1: let each grid updates its node ids in parallel using omp
     // may also convert 4d array back to 2d array in this step
     #pragma omp parallel for schedule(dynamic, 1) shared(nodeIdMapping)
     for (int threadId = 0; threadId < GRID_DIM * GRID_DIM; ++threadId) {
         updateNodeIpForGrid(threadId);
     }
+    end = std::chrono::high_resolution_clock::now();
+    auto step41_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    // for debug
-    // std::string fileNamePar5("nodesMap-par-step5.txt");
-    // saveNodesMapToFile(fileNamePar5);
-    // std::cout << "step 5 saved nodes map to file!" << std::endl;
-
-    // step 6: update the global marginal points
+    start = std::chrono::high_resolution_clock::now();
+    // step 4.2: update the global marginal points
     updateGlobalMarginalPoints(marginalPointsPerGrid);
+    end = std::chrono::high_resolution_clock::now();
+    auto step42_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    std::cout << "Step 2: " << step2_duration << " ms\n";
+    std::cout << "Step 3.1: " << step31_duration << " ms\n";
+    std::cout << "Step 3.2: " << step32_duration << " ms\n";
+    std::cout << "Step 4.1: " << step41_duration << " ms\n";
+    std::cout << "Step 4.2: " << step42_duration << " ms\n";
 }
 
 void Conversion::updateGlobalMarginalPoints(std::vector<std::vector<std::vector<Point>>> &marginalPointsPerGrid) {
@@ -412,6 +376,7 @@ void Conversion::findConflictPairsForGrid(int threadId, pair_set &gridNodePairs,
 }
 
 void Conversion::findNodesForGrid(int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds) {
+    auto start = std::chrono::high_resolution_clock::now();
     int gridIdxX = threadId % GRID_DIM;
     int gridIdxY = threadId / GRID_DIM;
     int localW = getGridWidth(gridIdxX);
@@ -437,6 +402,10 @@ void Conversion::findNodesForGrid(int threadId, std::vector<std::vector<Point>> 
             }
         }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+     printf("thread[%d] step 2 cost: %ld ms \n",
+             omp_get_thread_num(), duration);
 }
 
 void Conversion::fillAreaSeq(int x, int y, int id, std::vector<Point> &localMarginalPoints) {

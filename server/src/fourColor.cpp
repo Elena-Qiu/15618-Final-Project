@@ -164,26 +164,26 @@ int fourColorSolver::bruteForceHelperPar(int n, time_point start, const std::vec
             if (rst != SUCCESS) {
                 bool canColor = true;
                 for (auto &v: adjacentLists[n]) {
-                    // printf("[thread %d] checking node %d (color %d) with its neighbor %d (color %d)\n", omp_get_thread_num(), n, c, v, privateColors[v]);
+//                     printf("[thread %d] checking node %d (color %d) with its neighbor %d (color %d)\n", omp_get_thread_num(), n, c, v, privateColors[v]);
                     if (privateColors[v] == c) {
                         canColor = false;
-                        // printf("[thread %d] node %d cannot be colored with %d, so skip to next node\n", omp_get_thread_num(), n, c);
+//                         printf("[thread %d] node %d cannot be colored with %d, so skip to next node\n", omp_get_thread_num(), n, c);
                         break;
                     }
                 }
                 if (canColor) {
                     privateColors[n] = c;
-                    // printf("[thread %d] node %d is colored with %d\n", omp_get_thread_num(), n, c);
+//                     printf("[thread %d] node %d is colored with %d\n", omp_get_thread_num(), n, c);
                     int nextRst = bruteForceHelperPar(n + 1, start, privateColors);
                     if (nextRst == SUCCESS) {
                         #pragma omp critical
                         {
                             rst = SUCCESS;
                         }
-                        // printf("[thread %d] found solution!\n", omp_get_thread_num());
+//                         printf("[thread %d] found solution!\n", omp_get_thread_num());
                         #pragma omp cancel taskgroup
                     } else {
-                        // printf("[thread %d] further trying indicates node %d cannot be colored with %d, return back\n", omp_get_thread_num(), n, c);
+//                         printf("[thread %d] further trying indicates node %d cannot be colored with %d, return back\n", omp_get_thread_num(), n, c);
                         privateColors[n] = -1;
                     }
                 }
@@ -268,17 +268,6 @@ bool fourColorSolver::checkSolution() {
 }
 
 int fourColorSolver::solveGraph() {
-//    if (heuristic()) {
-//        if (!checkSolution()) {
-//            return "Heuristic Failure";
-//        }
-//        return "Heuristic Success";
-//    } else if (bruteForce()) {
-//        if (!checkSolution()) {
-//            return "BruteForce Failure";
-//        }
-//        return "BruteForce Success";
-//    }
     auto rst = bruteForce();
     if (rst == SUCCESS && !checkSolution()) {
         rst = WRONG;

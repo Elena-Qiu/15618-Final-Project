@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <unordered_set>
-#include "testGenerater.h"
+#include "testGenerator.h"
 
 using namespace std;
 

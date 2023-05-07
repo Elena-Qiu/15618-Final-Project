@@ -87,23 +87,20 @@ private:
     // for sequential
     void findNodesSeq();
     void findEdgesSeq();
+
     // for parallel
     void findNodesPar();
     void findEdgesPar();
 
     // for parallel findNodes
-    const int GRID_DIM = 20;
+    const int GRID_DIM = 4;
     std::vector<std::vector<int>> pixelToNodePar;
     std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
     int getPixelSeq(int x, int y);
     void setPixelSeq(int x, int y, int id);
-    // TODO: remember to resize it somewhere
     std::vector<std::vector<int>> encodedNodeIdPerGrid; // collection of encoded node id in all grids
     std::vector<pair_set> conflictPairsPerGrid; // collection of neighboring encoded node id
 
-    void calGlobalIdx();
-
-    void splitNodesMap();
     int getPixelPar(int gridIdxX, int gridIdxY, int localX, int localY);
     int getPixelPar(int globalX, int globalY);
     void setPixelPar(int gridIdxX, int gridIdxY, int localX, int localY, int id);
@@ -123,6 +120,7 @@ private:
     void findNodesForGrid(int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
     void updateNodeIpForGrid(int threadId);
     void updateGlobalMarginalPoints(std::vector<std::vector<std::vector<Point>>> &marginalPointsPerGrid);
+    void calGlobalIdx();
 };
 
 
