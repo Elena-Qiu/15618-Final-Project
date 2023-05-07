@@ -6,25 +6,25 @@
   <script src="lib/p5.min.js"></script>
 </head>
 <body>
-    <h1>Draw on me!</h1>
+    <h1 style="font-size: 300%;"> Draw on me! </h1>
     <div id="canvasContainer" style="padding: 50px;"></div>
-    <button onClick="button_reset()">Reset</button>
-    <button onClick="button_solve()">Solve</button>
-    <button onClick="button_generate_image()">Generate Image</button><br>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img01.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img02.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img03.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img04.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img05.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img06.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img07.png"></img><br>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img08.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img09.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img10.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img11.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img12.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img13.png"></img>
-    <img onClick="button_load_image(this.src)" height="50" src="examples/img14.png"></img>
+    <button onClick="button_reset()" style="border: 20px;">
+      <h1> Reset </h1>
+    </button>
+    <button onClick="button_solve(true)" style="border: 20px;">
+      <h1> Solve </h1>
+    </button>
+    
+    <div>
+      <h1> Examples </h1>
+      <img onClick="button_load_example('examples/testcases_good_40_100_4s_example.txt')" height="200" src="img/e4.png"></img>
+      <img onClick="button_load_example('examples/testcases_good_40_100_5s_example.txt')" height="200" src="img/e5.png"></img>
+      <img onClick="button_load_example('examples/testcases_good_40_100_8s_example.txt')" height="200" src="img/e8.png"></img>
+      <img onClick="button_load_example('examples/testcases_good_40_100_9s_example.txt')" height="200" src="img/e9.png"></img>
+      <img onClick="button_load_example('examples/testcases_good_40_100_10s_example.txt')" height="200" src="img/e10.png"></img>
+      <img onClick="button_load_example('examples/testcases_good_40_100_11s_example.txt')" height="200" src="img/e11.png"></img>
+      <img onClick="button_load_example('examples/testcases_good_40_100_15s_example.txt')" height="200" src="img/e15.png"></img>
+    </div>
     <br>
     <div id="data"></div>
     <div id="log"></div>

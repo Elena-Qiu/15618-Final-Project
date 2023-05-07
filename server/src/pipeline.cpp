@@ -46,11 +46,23 @@ static void constructOutputArray(std::vector<int> &array, char **output, size_t 
  */
 bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
     char *itr = input, *mark = input, *nodes_map_str = NULL;
+    bool seq;
+    // seq
+    while (*itr != '\n')    itr ++;
+    *itr = 0;
+    if (strcmp(mark, "true") == 0)
+        seq = true;
+    else
+        seq = false;
+    itr ++;
+    mark = itr;
+    // w
     while (*itr != '\n')    itr ++;
     *itr = 0;
     int w = atoi(mark);
     itr ++;
     mark = itr;
+    // h
     while (*itr != '\n')    itr ++;
     *itr = 0;
     int h = atoi(mark);
@@ -64,7 +76,7 @@ bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
     std::vector<int> output_pixels(length);
     constructInputArray(nodes_map_str, input_pixels);
 
-    bool res = solveMapHelper(w, h, input_pixels, output_pixels);
+    bool res = solveMapHelper(seq, w, h, input_pixels, output_pixels);
 
     if (res)    constructOutputArray(output_pixels, solutionp, solution_lenp);
     return res;
@@ -75,20 +87,26 @@ bool solveMap(char *input, char **solutionp, size_t *solution_lenp) {
  * map solver
  * @param w[in] the width of the image
  * @param h[in] the height of the image
+ * @param seq[in] whether or not to solve sequentially
  * @param input[in] the array of nodes map (length: w * h)
  * @param output[out] the array of nodes map (length: w * h)
  *
  * @return true if solving succeeds, false otherwise
  */
-bool solveMapHelper(int w, int h, const std::vector<int> &input, std::vector<int> &output) {
+bool solveMapHelper(bool seq, int w, int h, const std::vector<int> &input, std::vector<int> &output) {
     std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
     int timeout = 10;
-    bool converter_seq = true;
-    bool solver_seq = true;
+    bool converter_seq = seq;
+    bool solver_seq = seq;
     std::string adjFile = "adj.txt";
     std::string colorFile = "colors.txt";
     std::string nodesMapFile = "nodesMap.txt";
 
+    if (seq)
+        printf("solving sequentially\n");
+    else
+        printf("solving in parallel\n");
+    
     Conversion converter(converter_seq);
     fourColorSolver solver(timeout, solver_seq);
 

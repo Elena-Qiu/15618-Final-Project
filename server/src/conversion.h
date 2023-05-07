@@ -1,5 +1,5 @@
 //
-// Created by Qiu Yuqing on 2023/4/28.
+// Written by Yuqing Qiu and Chenfei Lou
 //
 
 #include <vector>
@@ -24,7 +24,7 @@ using pair_set = std::unordered_set<std::pair<int, int>, PairHashFunction>;
 
 const int LINE_EXPANSION = 0;
 const int MAX_LINE_THICKNESS = 2 * LINE_EXPANSION + 3;
-const int EDGE_THRESHOLD = 3;
+const int EDGE_THRESHOLD = 10;
 
 
 typedef struct Point {
@@ -87,20 +87,17 @@ private:
     // for sequential
     void findNodesSeq();
     void findEdgesSeq();
-
-    // for parallel
-    void findNodesPar();
-    void findEdgesPar();
-
-    // for parallel findNodes
-    const int GRID_DIM = 4;
-    std::vector<std::vector<int>> pixelToNodePar;
-    std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
     int getPixelSeq(int x, int y);
     void setPixelSeq(int x, int y, int id);
+
+    // for parallel findNodes
+    const int GRID_DIM = 32;
+    std::unordered_map<int, int> nodeIdMapping; // map encoded node id to global node id
     std::vector<std::vector<int>> encodedNodeIdPerGrid; // collection of encoded node id in all grids
     std::vector<pair_set> conflictPairsPerGrid; // collection of neighboring encoded node id
 
+    void findNodesPar();
+    void findEdgesPar();
     int getPixelPar(int gridIdxX, int gridIdxY, int localX, int localY);
     int getPixelPar(int globalX, int globalY);
     void setPixelPar(int gridIdxX, int gridIdxY, int localX, int localY, int id);
@@ -118,9 +115,9 @@ private:
     bool fillAreaPar(int gridIdxX, int gridIdxY, int localW, int localH, int x, int y, int id, std::vector<Point> &localMarginalPoints);
     void findConflictPairsForGrid(int threadId, pair_set &gridNodePairs, std::vector<std::vector<Point>> &gridMarginalPoints);
     void findNodesForGrid(int threadId, std::vector<std::vector<Point>> &gridMarginalPoints, std::vector<int> &gridEncodedNodeIds);
+    void calGlobalIdx();
     void updateNodeIpForGrid(int threadId);
     void updateGlobalMarginalPoints(std::vector<std::vector<std::vector<Point>>> &marginalPointsPerGrid);
-    void calGlobalIdx();
 };
 
 
