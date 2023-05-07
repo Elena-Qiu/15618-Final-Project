@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> return_status_array = {"Success", "Timeout", "Failure", "Wrong"};
     // ./fourColor testcase
     if (argc != 3) {
-        cout << "ERROR: argument number should be 3: ./fourcolor-release testcaseFilePath sequentialOrNot(\"true\" or \"false\")\n";
+        cout << "ERROR: argument number should be 3: ./fourcolor testcaseFilePath sequentialOrNot(\"true\" or \"false\")\n";
         exit(-1);
     }
     string inputFilePath(argv[1]);
