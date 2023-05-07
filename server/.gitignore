@@ -5,3 +5,5 @@ conversion.dSYM/
 testcases_conversion/6000*
 conversion
 fourcolor
+config.sh
+runFourColor.sh
