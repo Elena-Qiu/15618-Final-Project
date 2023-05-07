@@ -31,7 +31,7 @@ make conversion
 ```
 Then run `./conversion [testcaseFilePath] [sequentialOrNot(true or false)]`. For example, you can run
 ```bash
-./conversion testcases_conversion_1000x1000_0_0_inputs.txt false
+./conversion testcases_conversion/1000x1000_0_0_inputs.txt false
 ```
 #### Phase 2: Color Graph
 ```bash
