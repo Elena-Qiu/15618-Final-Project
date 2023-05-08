@@ -98,9 +98,9 @@ bool solveMapHelper(bool seq, int w, int h, const std::vector<int> &input, std::
     int timeout = 10;
     bool converter_seq = seq;
     bool solver_seq = seq;
-    std::string adjFile = "adj.txt";
-    std::string colorFile = "colors.txt";
-    std::string nodesMapFile = "nodesMap.txt";
+//    std::string adjFile = "adj.txt";
+//    std::string colorFile = "colors.txt";
+//    std::string nodesMapFile = "nodesMap.txt";
 
     if (seq)
         printf("solving sequentially\n");
@@ -116,14 +116,14 @@ bool solveMapHelper(bool seq, int w, int h, const std::vector<int> &input, std::
     converter.findEdges();
 
     solver.setGraph(converter.getNodeNum(), converter.getEdges());
-    solver.saveNodeAdjListToFile(adjFile);
+//    solver.saveNodeAdjListToFile(adjFile);
     
     int rst = solver.solveGraph();
     std::cout << "INFO: Solve Graph: " << return_status_array[rst] << "\n";
-    solver.saveToFile(colorFile);
+//    solver.saveToFile(colorFile);
 
     converter.addMapColors(solver.getColors());
-    converter.saveNodesMapToFile(nodesMapFile);
+//    converter.saveNodesMapToFile(nodesMapFile);
 
     output = converter.getPixelToNodeArray();
     return true;
