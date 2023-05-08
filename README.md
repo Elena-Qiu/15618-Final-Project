@@ -1,6 +1,8 @@
 # Parallel Four Color Map Solver (15618 Final Project)
 
-Contributors: Chenfei Lou, Yuqing Qiu
+Contributors:
+Chenfei Lou (chenfeil@andrew.cmu.edu)
+Yuqing Qiu (yuqingqi@andrew.cmu.edu)
 
 Website Link: https://alexanderia-mike.github.io
 
