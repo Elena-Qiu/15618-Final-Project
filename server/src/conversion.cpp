@@ -223,26 +223,26 @@ void Conversion::findNodesPar() {
 }
 
 void Conversion::updateGlobalMarginalPoints(std::vector<std::vector<std::vector<Point>>> &marginalPointsPerGrid) {
-for (int gridIdxY = 0; gridIdxY < GRID_DIM; ++gridIdxY) {
-for (int gridIdxX = 0; gridIdxX < GRID_DIM; ++gridIdxX) {
-// each grid
-int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
-auto &gridMarginalPoints = marginalPointsPerGrid[gridGlobalId];
-for (auto &localMarginalPoints : gridMarginalPoints) {
-// each margin
-if (localMarginalPoints.empty())
-continue;
+    for (int gridIdxY = 0; gridIdxY < GRID_DIM; ++gridIdxY) {
+        for (int gridIdxX = 0; gridIdxX < GRID_DIM; ++gridIdxX) {
+            // each grid
+            int gridGlobalId = gridIdxY * GRID_DIM + gridIdxX;
+            auto &gridMarginalPoints = marginalPointsPerGrid[gridGlobalId];
+            for (auto &localMarginalPoints : gridMarginalPoints) {
+                // each margin
+                if (localMarginalPoints.empty())
+                    continue;
 
-Point &sampleLocation = localMarginalPoints.at(0);
-int globalNodeId = getPixel(sampleLocation.x, sampleLocation.y);
+                Point &sampleLocation = localMarginalPoints.at(0);
+                int globalNodeId = getPixel(sampleLocation.x, sampleLocation.y);
 
-for (auto &marginalPoint : localMarginalPoints) {
-// each point
-marginalPoints.at(globalNodeId).emplace_back(marginalPoint);
-}
-}
-}
-}
+                for (auto &marginalPoint : localMarginalPoints) {
+                    // each point
+                    marginalPoints.at(globalNodeId).emplace_back(marginalPoint);
+                }
+            }
+        }
+    }
 }
 
 void Conversion::updateNodeIpForGrid(int threadId) {
