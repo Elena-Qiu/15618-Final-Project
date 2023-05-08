@@ -4,9 +4,9 @@ Contributors: Chenfei Lou, Yuqing Qiu
 
 Website Link: https://alexanderia-mike.github.io
 
-### Running Instructions
+## Running Instructions
 Please setup server and frontend separately as follows.
-#### Server
+### Server
 
 ```bash
 cd server
@@ -14,7 +14,7 @@ make server
 ./server
 ```
 It receives map from frontend, solves it and sends the solution back.
-#### Frontend
+### Frontend
 ```bash
 cd frontend
 ```
@@ -22,9 +22,10 @@ Set `IP` and `PORT` of the server in `fourcolors.js`. Then run it on local host.
 As shown in the demo below, you can either load preset map or draw your own map for solving.
 
 ![demo](demo.gif)
-### Testing
+
+## Testing
 For parallel running, needs to install `openMP` library.
-#### Phase 1: Convert Map to Graph
+### Phase 1: Convert Map to Graph
 ```bash
 cd server
 make conversion
@@ -33,7 +34,7 @@ Then run `./conversion [testcaseFilePath] [sequentialOrNot(true or false)]`. For
 ```bash
 ./conversion testcases_conversion/1000x1000_0_0_inputs.txt false
 ```
-#### Phase 2: Color Graph
+### Phase 2: Color Graph
 ```bash
 cd server
 make fourcolor

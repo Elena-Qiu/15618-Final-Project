@@ -8,3 +8,4 @@ adj.txt
 colors.txt
 nodesMap.txt
 server/CMakeLists.txt
+frontend/lib
