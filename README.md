@@ -1,6 +1,8 @@
 # Parallel Four Color Map Solver (15618 Final Project)
 
-Contributors: Chenfei Lou, Yuqing Qiu
+Contributors:
+Chenfei Lou (chenfeil@andrew.cmu.edu)
+Yuqing Qiu (yuqingqi@andrew.cmu.edu)
 
 Website Link: https://alexanderia-mike.github.io
 
@@ -17,6 +19,10 @@ It receives map from frontend, solves it and sends the solution back.
 ### Frontend
 ```bash
 cd frontend
+# download p5.js library
+wget https://github.com/processing/p5.js/releases/download/v1.6.0/p5.zip
+unzip p5.zip
+rm p5.zip
 ```
 Set `IP` and `PORT` of the server in `fourcolors.js`. Then run it on local host. You can use the `Live Server` extension in VS Code.
 As shown in the demo below, you can either load preset map or draw your own map for solving.
