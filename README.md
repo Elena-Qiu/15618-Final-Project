@@ -4,7 +4,7 @@ Contributors:
 Chenfei Lou (chenfeil@andrew.cmu.edu)
 Yuqing Qiu (yuqingqi@andrew.cmu.edu)
 
-Website Link: https://alexanderia-mike.github.io
+Website Link: https://alexanderia-mike.github.io/15618proj/index.html
 
 ## Running Instructions
 Please setup server and frontend separately as follows.
